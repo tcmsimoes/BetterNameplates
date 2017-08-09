@@ -1,0 +1,9 @@
+## Interface: 70200
+## Title: Blizzard Nameplates - Player Debuffs
+## Notes: Adds debuff bar to player nameplate and possible overrides to player buffs
+## Version: 1.0
+## LoadOnDemand: 0
+## LoadWith: Blizzard_NamePlates
+
+PlayerBuffsOverride.lua
+PlayerDebuffsFrame.xml

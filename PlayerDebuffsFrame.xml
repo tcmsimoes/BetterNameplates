@@ -1,0 +1,20 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+	<Script file="PlayerDebuffsFrame.lua" />
+
+	<Frame parent="NamePlatePlayerResourceFrame" name="Frame_PlayerDebuffs" inherits="BuffFrame" mixin="NameplatePlayerDebuffContainerMixin">
+		<Size x="98" y="20"/>
+		<Anchors>
+			<Anchor point="BOTTOMLEFT" x="0" y="-14"/>
+		</Anchors>
+		<KeyValues>
+			<KeyValue key="spacing" value="4" type="number"/>
+			<KeyValue key="fixedHeight" value="14" type="number"/>
+		</KeyValues>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEvent method="OnEvent"/>
+			<OnUpdate method="OnUpdate"/>
+		</Scripts>
+	</Frame>
+</Ui>
