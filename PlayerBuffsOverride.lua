@@ -12,11 +12,12 @@ local visibleSpells = {
 
 function UpdatePlayerBuffs(nameplate, unit)
     local buffFrame = nameplate.UnitFrame.BuffFrame;
-    buffFrame.unit = "";
+    buffFrame.unit = unit;
     buffFrame:UpdateAnchor();
 
     local buffMaxDisplay = 4;
     local buffIndex = 1;
+
     for spell in pairs(visibleSpells) do
         if (buffIndex > buffMaxDisplay) then
             break;
@@ -47,7 +48,7 @@ function UpdatePlayerBuffs(nameplate, unit)
         end
     end
 
-    for i = buffIndex, BUFF_MAX_DISPLAY do
+    for i = buffIndex, buffMaxDisplay do
         if (buffFrame.buffList[i]) then
             buffFrame.buffList[i]:Hide();
         end

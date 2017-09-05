@@ -15,12 +15,10 @@ end
 function NameplatePlayerDebuffContainerMixin:OnEvent(event, ...)
     if (event == "UNIT_AURA") then
         local unit = ...;
- 
-        if unit ~= "player" then
-            return;
-        end
 
-        self:UpdateBuffs();
+        if (UnitIsUnit("player", unit)) then
+            self:UpdateBuffs(unit);
+        end
     end
 end
 
@@ -32,12 +30,15 @@ function NameplatePlayerDebuffContainerMixin:OnUpdate(elapsed)
     end
 end
 
-function NameplatePlayerDebuffContainerMixin:UpdateBuffs()
+function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
+    self.unit = unit;
+    self.filter = "HARMFUL";
+
     local buffMaxDisplay = 4;
     local buffIndex = 1;
 
     for i = 1, buffMaxDisplay do
-        local name, _, texture, count, debuffType, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura("player", i, "HARMFUL");
+        local name, _, texture, count, debuffType, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(self.unit, i, self.filter);
 
         if (name) then
             if (not self.buffList[buffIndex]) then
