@@ -12,14 +12,24 @@ local visibleSpells = {
 
 function UpdatePlayerBuffs(nameplate, unit)
     local buffFrame = nameplate.UnitFrame.BuffFrame;
+
+    if not buffFrame.isActive then
+        for i = 1, BUFF_MAX_DISPLAY do
+            if (buffFrame.buffList[i]) then
+                buffFrame.buffList[i]:Hide();
+            end
+        end
+
+        return;
+    end
+
     buffFrame.unit = unit;
     buffFrame:UpdateAnchor();
 
-    local buffMaxDisplay = 4;
     local buffIndex = 1;
 
     for spell in pairs(visibleSpells) do
-        if (buffIndex > buffMaxDisplay) then
+        if (buffIndex > 4) then
             break;
         end
 
@@ -48,7 +58,7 @@ function UpdatePlayerBuffs(nameplate, unit)
         end
     end
 
-    for i = buffIndex, buffMaxDisplay do
+    for i = buffIndex, BUFF_MAX_DISPLAY do
         if (buffFrame.buffList[i]) then
             buffFrame.buffList[i]:Hide();
         end
@@ -59,7 +69,7 @@ end
 
 
 hooksecurefunc(NamePlateDriverFrame, "OnUnitAuraUpdate", function(self, unit)
-    local nameplate = C_NamePlate.GetNamePlateForUnit(unit);
+    local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure());
     if ((nameplate) and UnitIsUnit("player", unit)) then
         local _, _, class = UnitClass(unit);
         if (class == 6) then

@@ -6,4 +6,5 @@
 ## LoadWith: Blizzard_NamePlates
 
 PlayerBuffsOverride.lua
+TargetIndicator.lua
 PlayerDebuffsFrame.xml
