@@ -1,12 +1,21 @@
 -- This file is loaded from "DefaultNameplates.toc"
 
 local visibleSpells = {
+-- other classes
+    ["Pain Suppression"] = true,
+    ["Guardian Spirit"] = true,
+    ["Ironbark"] = true,
+    ["Life Cocoon"] = true,
+    ["Blessing of Sacrifice"] = true,
+-- dk
     ["Bone Shield"] = true,
     ["Anti-Magic Shell"] = true,
     ["Vampiric Blood"] = true,
     ["Icebound Fortitude"] = true,
     ["Dancing Rune Weapon"] = true,
     ["Rune Tap"] = true,
+    ["Blood Mirror"] = true,
+    ["Bonestorm"] = true,
     ["Pillar of Frost"] = true
 };
 

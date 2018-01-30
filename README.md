@@ -1,2 +1,5 @@
-# NameplatesDebuffs
-Adds debuff bar to Blizzard player nameplate and allows to override player nameplate buffs list
+# BetterNameplates
+Allows to override player nameplate buff list
+Adds debuff bar to player nameplate
+Enlarges the current target nameplate (scales)
+Adds threat coloring

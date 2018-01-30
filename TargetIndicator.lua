@@ -6,17 +6,26 @@ local oldNamePlateTarget = nil;
 local oldNamePlateTargetScale = -1;
 
 myFrame:SetScript("OnEvent", function(self, event)
-    local namePlateTarget = C_NamePlate.GetNamePlateForUnit("target", issecure());
-    if (namePlateTarget and namePlateTarget ~= oldNamePlateTarget) then
-        local newNamePlateTargetScale = namePlateTarget.UnitFrame:GetScale();
+    if (not UnitIsUnit("player", "target")) then
+        local namePlateTarget = C_NamePlate.GetNamePlateForUnit("target", issecure());
+        if (namePlateTarget) then
+            if (namePlateTarget ~= oldNamePlateTarget) then
+                local newNamePlateTargetScale = namePlateTarget.UnitFrame:GetScale();
 
-        namePlateTarget.UnitFrame:SetScale(newNamePlateTargetScale * 1.25);
+                namePlateTarget.UnitFrame:SetScale(newNamePlateTargetScale * 1.275);
 
-        if (oldNamePlateTarget) then
-            oldNamePlateTarget.UnitFrame:SetScale(oldNamePlateTargetScale);
+                if (oldNamePlateTarget) then
+                    oldNamePlateTarget.UnitFrame:SetScale(oldNamePlateTargetScale);
+                end
+
+                oldNamePlateTarget = namePlateTarget;
+                oldNamePlateTargetScale = newNamePlateTargetScale;
+            end
+        else
+            if (oldNamePlateTarget) then
+                oldNamePlateTarget.UnitFrame:SetScale(oldNamePlateTargetScale);
+                oldNamePlateTarget = nil;
+            end
         end
-
-        oldNamePlateTarget = namePlateTarget;
-        oldNamePlateTargetScale = newNamePlateTargetScale;
     end
 end);

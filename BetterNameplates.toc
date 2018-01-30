@@ -1,0 +1,12 @@
+## Interface: 70200
+## Title: Blizzard Nameplates - Improvements
+## Notes: Tweaks to blizzard nameplates
+## Version: 1.0
+## LoadOnDemand: 0
+## LoadWith: Blizzard_NamePlates
+
+PlayerBuffsOverride.lua
+TargetIndicator.lua
+ThreatColoring.lua
+
+PlayerDebuffsFrame.xml
