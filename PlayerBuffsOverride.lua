@@ -1,5 +1,3 @@
--- This file is loaded from "DefaultNameplates.toc"
-
 local visibleSpells = {
 -- other classes
     ["Pain Suppression"] = true,
@@ -7,7 +5,7 @@ local visibleSpells = {
     ["Ironbark"] = true,
     ["Life Cocoon"] = true,
     ["Blessing of Sacrifice"] = true,
--- dk
+-- dk blood
     ["Bone Shield"] = true,
     ["Anti-Magic Shell"] = true,
     ["Vampiric Blood"] = true,
@@ -16,7 +14,11 @@ local visibleSpells = {
     ["Rune Tap"] = true,
     ["Blood Mirror"] = true,
     ["Bonestorm"] = true,
-    ["Pillar of Frost"] = true
+    ["Vampiric Aura"] = true,
+-- dk frost
+    ["Pillar of Frost"] = true,
+    ["Obliteration"] = true,
+    ["Unholy Strength"] = true
 };
 
 function UpdatePlayerBuffs(nameplate, unit)
@@ -42,7 +44,7 @@ function UpdatePlayerBuffs(nameplate, unit)
             break;
         end
 
-        local name, _, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, spell);
+        local name, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, spell);
         if (name) then
             if (not buffFrame.buffList[buffIndex]) then
                 buffFrame.buffList[buffIndex] = CreateFrame("Frame", buffFrame:GetParent():GetName() .. "Buff" .. buffIndex, buffFrame, "NameplateBuffButtonTemplate");
@@ -51,7 +53,6 @@ function UpdatePlayerBuffs(nameplate, unit)
             end
             local buff = buffFrame.buffList[buffIndex];
             buff:SetID(buffIndex);
-            buff.name = name;
             buff.Icon:SetTexture(texture);
             if (count > 1) then
                 buff.CountFrame.Count:SetText(count);
@@ -72,7 +73,6 @@ function UpdatePlayerBuffs(nameplate, unit)
             buffFrame.buffList[i]:Hide();
         end
     end
-
     buffFrame:Layout();
 end
 
