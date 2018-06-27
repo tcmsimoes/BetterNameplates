@@ -8,5 +8,6 @@
 PlayerBuffsOverride.lua
 TargetIndicator.lua
 ThreatColoring.lua
+PlayerNameplate.lua
 
 PlayerDebuffsFrame.xml

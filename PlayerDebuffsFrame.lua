@@ -48,7 +48,6 @@ function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
             end
             local buff = self.buffList[buffIndex];
             buff:SetID(i);
-            buff.name = name;
             buff.Icon:SetTexture(texture);
             if (count > 1) then
                 buff.CountFrame.Count:SetText(count);

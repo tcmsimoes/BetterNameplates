@@ -5,7 +5,7 @@ myFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 local oldNamePlateTarget = nil
 local oldNamePlateTargetScale = -1
 
-myFrame:SetScript("OnEvent", function(self, event)
+myFrame:SetScript("OnEvent", function(self, event, ...)
     if (not UnitIsUnit("player", "target")) then
         local namePlateTarget = C_NamePlate.GetNamePlateForUnit("target", issecure())
         if (namePlateTarget) then
@@ -27,10 +27,5 @@ myFrame:SetScript("OnEvent", function(self, event)
                 oldNamePlateTarget = nil
             end
         end
-    else
-        local class, classFileName = UnitClass("player")
-        local color = RAID_CLASS_COLORS[classFileName]
-        C_NamePlate.SetNamePlateSelfSize(128, 32)
-        oldNamePlateTarget.UnitFrame:SetStatusBarColor(color.r, color.g, color.b)
     end
 end)
