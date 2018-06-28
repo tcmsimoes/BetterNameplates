@@ -1,5 +1,6 @@
 local visibleSpells = {
 -- other classes
+---- defensive
     ["Guardian Spirit"] = true,
     ["Divine Hymn"] = true,
     ["Pain Suppression"] = true,
@@ -14,6 +15,9 @@ local visibleSpells = {
     ["Aura Mastery"] = true,
     ["Commanding Shout"] = true,
     ["Darkness"] = true,
+---- offensive
+    ["Bloodlust"] = true,
+    ["Time Warp"] = true,
 -- dk
     ["Unholy Strength"] = true,
     ["Anti-Magic Shell"] = true,
@@ -48,19 +52,25 @@ function UpdatePlayerBuffs(nameplate, unit)
         return;
     end
 
-    local buffMaxDisplay = 32;
+    buffFrame.filter = "HELPFUL";
+
     local buffsPresentCount = 0;
     local buffsPresent = {};
-    for i = 1, buffMaxDisplay do
-        if (buffFrame.buffList[i]) and buffFrame.buffList[i]:IsShown() then
-            buffsPresent[buffFrame.buffList[i]:GetID()] = true;
-            buffsPresentCount = buffsPresentCount + 1;
+    for i = 1, BUFF_MAX_DISPLAY do
+        local buff = buffFrame.buffList[i];
+        if (buff) then
+            buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
+            buff:SetScale(1.0);
+            if (buff:IsShown()) then
+                buffsPresent[buff:GetID()] = true;
+                buffsPresentCount = buffsPresentCount + 1;
+            end
         end
     end
 
     local filteredSpells = {};
     for i = 1, 40 do
-        local name, _, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, "HELPFUL");
+        local name, _, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
 
         if (not spellId) then
             break;
@@ -79,13 +89,13 @@ function UpdatePlayerBuffs(nameplate, unit)
 
     local buffIndex = buffsPresentCount + 1;
     for i, spell in pairs(filteredSpells) do
-        if (buffIndex > buffMaxDisplay) then
+        if (buffIndex > BUFF_MAX_DISPLAY) then
             break;
         end
 
         if (spell.name) then
             if (not buffFrame.buffList[buffIndex]) then
-                buffFrame.buffList[buffIndex] = CreateFrame("Frame", buffFrame:GetParent():GetName() .. "Buff" .. buffIndex, buffFrame, "NameplateBuffButtonTemplate");
+                buffFrame.buffList[buffIndex] = CreateFrame("Frame", buffFrame:GetParent():GetName() .. "PlayerBuff" .. buffIndex, buffFrame, "NameplateBuffButtonTemplate");
                 buffFrame.buffList[buffIndex]:SetMouseClickEnabled(false);
                 buffFrame.buffList[buffIndex].layoutIndex = buffIndex;
             end
@@ -106,7 +116,7 @@ function UpdatePlayerBuffs(nameplate, unit)
         end
     end
 
-    for i = buffIndex, buffMaxDisplay do
+    for i = buffIndex, BUFF_MAX_DISPLAY do
         if (buffFrame.buffList[i]) then
             buffFrame.buffList[i]:Hide();
         end
@@ -121,26 +131,29 @@ function UpdateEnemyBuffs(nameplate, unit)
         return;
     end
 
-    local buffMaxDisplay = 32;
+    buffFrame.filter = "HELPFUL";
+
     local buffsPresentCount = 0;
     local buffsPresent = {};
-    for i = 1, buffMaxDisplay do
+    for i = 1, BUFF_MAX_DISPLAY do
         local buff = buffFrame.buffList[i];
-        if (buff and buff:IsShown()) then
+        if (buff) then
             buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
             buff:SetScale(1.0);
-            buffsPresent[buff:GetID()] = true;
-            buffsPresentCount = buffsPresentCount + 1;
+            if (buff:IsShown()) then
+                buffsPresent[buff:GetID()] = true;
+                buffsPresentCount = buffsPresentCount + 1;
+            end
         end
     end
 
     local buffIndex = buffsPresentCount + 1;
-    for i = 1, buffMaxDisplay do
-        local name, _, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, "HELPFUL");
+    for i = 1, BUFF_MAX_DISPLAY do
+        local name, _, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
 
         if (name) then
             if (not buffFrame.buffList[buffIndex]) then
-                buffFrame.buffList[buffIndex] = CreateFrame("Frame", buffFrame:GetParent():GetName() .. "Buff" .. buffIndex, buffFrame, "NameplateBuffButtonTemplate");
+                buffFrame.buffList[buffIndex] = CreateFrame("Frame", buffFrame:GetParent():GetName() .. "EnemyBuff" .. buffIndex, buffFrame, "NameplateBuffButtonTemplate");
                 buffFrame.buffList[buffIndex]:SetMouseClickEnabled(false);
                 buffFrame.buffList[buffIndex].layoutIndex = buffIndex;
                 buffFrame.buffList[buffIndex]:SetBackdrop({
@@ -167,6 +180,11 @@ function UpdateEnemyBuffs(nameplate, unit)
         end
     end
 
+    for i = buffIndex, BUFF_MAX_DISPLAY do
+        if (buffFrame.buffList[i]) then
+            buffFrame.buffList[i]:Hide();
+        end
+    end
     buffFrame:Layout();
 end
 

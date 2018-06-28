@@ -1,4 +1,4 @@
-local myFrame = CreateFrame("MyFrame")
+local myFrame = CreateFrame("Frame")
 myFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 myFrame:SetScript("OnEvent", function(self, event, ...)
