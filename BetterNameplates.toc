@@ -1,13 +1,15 @@
-## Interface: 70200
-## Title: Blizzard Nameplates - Improvements
+## Interface: 70300
+## Title: BetterNameplates
 ## Notes: Tweaks to blizzard nameplates
+## Author: Banksy
 ## Version: 1.0
 ## LoadOnDemand: 0
 ## LoadWith: Blizzard_NamePlates
 
-PlayerBuffsOverride.lua
+BuffsOverride.lua
 TargetIndicator.lua
 ThreatColoring.lua
 PlayerNameplate.lua
+PlayerFrame.lua
 
 PlayerDebuffsFrame.xml

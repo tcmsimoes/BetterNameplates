@@ -1,7 +1,10 @@
 local function SetupPlayerNamePlate(frame, setupOptions, frameOptions)
     if not frameOptions.displayName then
         frame.healthBar:SetHeight(12)
-        frame.healthBar:SetStatusBarTexture("Interface\\AddOns\\BetterNameplates\\media\\bar_serenity")
+        frame.healthBar:SetStatusBarTexture("Interface\\AddOns\\BetterNameplates\\media\\player_nameplate")
+
+        --frameOptions.healthBarColorOverride = nil
+        --frameOptions.useClassColors = true
     end
 end
 

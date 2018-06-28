@@ -134,8 +134,8 @@ local function updateThreatColor(frame)
             if playerRole == "TANK" then
                 if status >= 5 then             -- another tank tanking by threat
                     r, g, b = 0.20, 0.50, 0.90  -- blue    no problem
-                elseif status >= 4 then         -- tanks tanking by force
-                    r, g, b = 1.00, 0.50, 0.00  -- orange  another tank stealing aggro
+                elseif status >= 4 then         -- another tank tanking by force
+                    r, g, b = 1.00, 0.60, 0.00  -- orange  another tank stealing aggro
                 elseif status >= 3 then         -- player tanking by threat
                     r, g, b = 0.00, 0.50, 0.01  -- green   no problem
                 elseif status >= 2 then         -- player tanking by force
@@ -143,9 +143,9 @@ local function updateThreatColor(frame)
                 elseif status >= 1 then         -- others tanking by force
                     r, g, b = 1.00, 0.00, 0.00  -- red     taunt now
                 elseif status >= 0 then         -- others tanking by threat
-                    r, g, b = 1.00, 0.60, 0.00  -- red     taunt now
+                    r, g, b = 1.00, 1.00, 0.47  -- yellow  taunt?
                 end
-            else
+            elseif tank > 0 or offtank > 0 then
                 if status >= 4 then             -- tanks tanking by threat or by force
                     r, g, b = 0.00, 0.50, 0.01  -- green   no problem
                 elseif status >= 2 then         -- player tanking by force
@@ -153,6 +153,8 @@ local function updateThreatColor(frame)
                 elseif status >= 0 then         -- others tanking by threat or by force
                     r, g, b = 1.00, 0.60, 0.00  -- green   no problem
                 end
+            else
+                r, g, b = 1.00, 0.00, 0.00
             end
 
             if not frame.threat then
