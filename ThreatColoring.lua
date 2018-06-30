@@ -128,7 +128,7 @@ local function updateThreatColor(frame)
         local status, tank, offtank, player, nontank = threatSituation(unit)
 
         -- only recalculate color when situation was actually changed with gradient toward sibling color
-        if not frame.threat or frame.threat.lastStatus ~= status or frame.threat.lastRatio ~= unit then
+        if not frame.threat or frame.threat.lastStatus ~= status then
             local r, g, b = 1.0, 0.0, 0.0   -- red outside combat
 
             if playerRole == "TANK" then
@@ -145,7 +145,7 @@ local function updateThreatColor(frame)
                 elseif status >= 0 then         -- others tanking by threat
                     r, g, b = 1.00, 1.00, 0.47  -- yellow  taunt?
                 end
-            elseif tank > 0 or offtank > 0 then
+            elseif next(nonTanks) then
                 if status >= 4 then             -- tanks tanking by threat or by force
                     r, g, b = 0.00, 0.50, 0.01  -- green   no problem
                 elseif status >= 2 then         -- player tanking by force
@@ -153,8 +153,6 @@ local function updateThreatColor(frame)
                 elseif status >= 0 then         -- others tanking by threat or by force
                     r, g, b = 1.00, 0.60, 0.00  -- green   no problem
                 end
-            else
-                r, g, b = 1.00, 0.00, 0.00
             end
 
             if not frame.threat then
@@ -165,7 +163,6 @@ local function updateThreatColor(frame)
             end
 
             frame.threat.lastStatus = status
-            frame.threat.lastRatio = unit
             frame.threat.color.r = r
             frame.threat.color.g = g
             frame.threat.color.b = b
