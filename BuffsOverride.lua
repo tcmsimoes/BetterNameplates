@@ -59,8 +59,10 @@ function UpdatePlayerBuffs(nameplate, unit)
     for i = 1, BUFF_MAX_DISPLAY do
         local buff = buffFrame.buffList[i];
         if (buff) then
-            buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
-            buff:SetScale(1.0);
+            if (buff.hasBackdrop) then
+                buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
+                buff:SetScale(1.0);
+            end
             if (buff:IsShown()) then
                 buffsPresent[buff:GetID()] = true;
                 buffsPresentCount = buffsPresentCount + 1;
@@ -138,8 +140,10 @@ function UpdateEnemyBuffs(nameplate, unit)
     for i = 1, BUFF_MAX_DISPLAY do
         local buff = buffFrame.buffList[i];
         if (buff) then
-            buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
-            buff:SetScale(1.0);
+            if (buff.hasBackdrop) then
+                buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
+                buff:SetScale(1.0);
+            end
             if (buff:IsShown()) then
                 buffsPresent[buff:GetID()] = true;
                 buffsPresentCount = buffsPresentCount + 1;
@@ -156,15 +160,18 @@ function UpdateEnemyBuffs(nameplate, unit)
                 buffFrame.buffList[buffIndex] = CreateFrame("Frame", buffFrame:GetParent():GetName() .. "EnemyBuff" .. buffIndex, buffFrame, "NameplateBuffButtonTemplate");
                 buffFrame.buffList[buffIndex]:SetMouseClickEnabled(false);
                 buffFrame.buffList[buffIndex].layoutIndex = buffIndex;
-                buffFrame.buffList[buffIndex]:SetBackdrop({
-                    bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-                    insets = {top = -1, bottom = -1, left = -1, right = -1}
-                });
             end
             local buff = buffFrame.buffList[buffIndex];
             buff:SetID(i);
             buff.Icon:SetTexture(texture);
-            buff:SetBackdropColor(1.0, 0.0, 0.0, 0.3);
+            if (not buff.hasBackdrop) then
+                buff:SetBackdrop({
+                    bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+                    insets = {top = -1, bottom = -1, left = -1, right = -1}
+                });
+                buff.hasBackdrop = true;
+            end
+            buff:SetBackdropColor(1.0, 0.0, 0.0, 0.4);
             buff:SetScale(1.125);
             if (count > 1) then
                 buff.CountFrame.Count:SetText(count);
@@ -188,11 +195,27 @@ function UpdateEnemyBuffs(nameplate, unit)
     buffFrame:Layout();
 end
 
+local inBattleground = false;
+
 hooksecurefunc(NamePlateDriverFrame, "OnUnitAuraUpdate", function(self, unit)
     local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure());
     if (nameplate and UnitIsUnit("player", unit)) then
         UpdatePlayerBuffs(nameplate, unit);
-    elseif (nameplate) then
+    elseif (nameplate and not inBattleground) then
         UpdateEnemyBuffs(nameplate, unit);
     end
-end)
+end);
+
+local myFrame = CreateFrame("Frame");
+myFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
+
+myFrame:SetScript("OnEvent", function(self, event, ...)
+    elseif (event = "PLAYER_ENTERING_WORLD") then
+        local _, zone = IsInInstance();
+        if (zone == "pvp") then
+            zone = true;
+        else
+            zone = false;
+        end
+    end
+end);

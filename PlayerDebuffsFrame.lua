@@ -35,7 +35,7 @@ function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
     self.filter = "HARMFUL";
 
     local buffIndex = 1;
-    for i = 1, BUFF_MAX_DISPLAY do
+    for i = 1, DEBUFF_MAX_DISPLAY do
         local name, _, texture, count, debuffType, duration, expirationTime, caster, _, _, spellId, _, isBossDebuff, _, _ = UnitAura(self.unit, i, self.filter);
 
         if (name) then
@@ -43,16 +43,19 @@ function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
                 self.buffList[buffIndex] = CreateFrame("Frame", self:GetParent():GetName() .. "PlayerDebuff" .. buffIndex, self, "NameplateBuffButtonTemplate");
                 self.buffList[buffIndex]:SetMouseClickEnabled(false);
                 self.buffList[buffIndex].layoutIndex = buffIndex;
-                self.buffList[buffIndex]:SetBackdrop({
-                    bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-                    insets = {top = -1, bottom = -1, left = -1, right = -1}
-                });
             end
             local buff = self.buffList[buffIndex];
             buff:SetID(i);
             buff.Icon:SetTexture(texture);
             if (isBossDebuff) then
-                buff:SetBackdropColor(1.0, 0.0, 0.0, 0.3);
+                if (not buff.hasBackdrop) then
+                    buff:SetBackdrop({
+                        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+                        insets = {top = -1, bottom = -1, left = -1, right = -1}
+                    });
+                    buff.hasBackdrop = true;
+                end
+                buff:SetBackdropColor(1.0, 0.0, 0.0, 0.4);
             else
                 buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
             end
@@ -71,7 +74,7 @@ function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
         end
     end
 
-    for i = buffIndex, BUFF_MAX_DISPLAY do
+    for i = buffIndex, DEBUFF_MAX_DISPLAY do
         if (self.buffList[i]) then
             self.buffList[i]:Hide();
         end
