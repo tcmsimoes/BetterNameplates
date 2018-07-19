@@ -72,7 +72,7 @@ function UpdatePlayerBuffs(nameplate, unit)
 
     local filteredSpells = {};
     for i = 1, 40 do
-        local name, _, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
+        local name, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
 
         if (not spellId) then
             break;
@@ -153,7 +153,7 @@ function UpdateEnemyBuffs(nameplate, unit)
 
     local buffIndex = buffsPresentCount + 1;
     for i = 1, BUFF_MAX_DISPLAY do
-        local name, _, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
+        local name, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
 
         if (name) then
             if (not buffFrame.buffList[buffIndex]) then
@@ -210,7 +210,7 @@ local myFrame = CreateFrame("Frame");
 myFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 
 myFrame:SetScript("OnEvent", function(self, event, ...)
-    elseif (event = "PLAYER_ENTERING_WORLD") then
+    if (event == "PLAYER_ENTERING_WORLD") then
         local _, zone = IsInInstance();
         if (zone == "pvp") then
             zone = true;

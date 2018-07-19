@@ -36,7 +36,7 @@ function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
 
     local buffIndex = 1;
     for i = 1, DEBUFF_MAX_DISPLAY do
-        local name, _, texture, count, debuffType, duration, expirationTime, caster, _, _, spellId, _, isBossDebuff, _, _ = UnitAura(self.unit, i, self.filter);
+        local name, texture, count, debuffType, duration, expirationTime, caster, _, _, spellId, _, isBossDebuff, _, _ = UnitAura(self.unit, i, self.filter);
 
         if (name) then
             if (not self.buffList[buffIndex]) then
