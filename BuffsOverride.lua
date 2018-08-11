@@ -22,6 +22,7 @@ local visibleSpells = {
     ["Unholy Strength"] = true,
     ["Anti-Magic Shell"] = true,
     ["Icebound Fortitude"] = true,
+    ["Dark Succor"] = true,
 ---- blood
     ["Bone Shield"] = true,
     ["Vampiric Blood"] = true,
@@ -33,6 +34,8 @@ local visibleSpells = {
 ---- frost
     ["Pillar of Frost"] = true,
     ["Obliteration"] = true,
+    ["Cold Heart"] = true,
+    ["Empower Rune Weapon"] = true,
 -- warrior
     ["Victorious"] = true,
 ---- fury
