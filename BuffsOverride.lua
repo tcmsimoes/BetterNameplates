@@ -42,10 +42,17 @@ local visibleSpells = {
     ["Enrage"] = true,
     ["Juggernaut"] = true,
     ["Battle Cry"] = true,
+    ["Whirlwind"] = true,
 ---- arms
     ["Shattered Defenses"] = true,
     ["Weighted Blade"] = true,
     ["Executioner's Precision"] = true,
+-- druid
+---- balance
+    ["Starfall"] = true,
+-- shaman
+---- enhancement
+    ["Crash Lightning"] = true,
 };
 
 function UpdatePlayerBuffs(nameplate, unit)
