@@ -52,7 +52,11 @@ local visibleSpells = {
     ["Starfall"] = true,
 -- shaman
 ---- enhancement
+    ["Lightning Shield"] = true,
     ["Crash Lightning"] = true,
+-- monk
+---- brewmaster
+    ["Rushing Jade Wind"] = true,
 };
 
 function UpdatePlayerBuffs(nameplate, unit)
@@ -64,9 +68,10 @@ function UpdatePlayerBuffs(nameplate, unit)
 
     buffFrame.filter = "HELPFUL";
 
+    local PLAYER_BUFF_MAX_DISPLAY = 8;
     local buffsPresentCount = 0;
     local buffsPresent = {};
-    for i = 1, BUFF_MAX_DISPLAY do
+    for i = 1, PLAYER_BUFF_MAX_DISPLAY do
         local buff = buffFrame.buffList[i];
         if (buff) then
             if (buff.hasBackdrop) then
@@ -101,7 +106,7 @@ function UpdatePlayerBuffs(nameplate, unit)
 
     local buffIndex = buffsPresentCount + 1;
     for i, spell in pairs(filteredSpells) do
-        if (buffIndex > BUFF_MAX_DISPLAY) then
+        if (buffIndex > PLAYER_BUFF_MAX_DISPLAY) then
             break;
         end
 
@@ -128,7 +133,7 @@ function UpdatePlayerBuffs(nameplate, unit)
         end
     end
 
-    for i = buffIndex, BUFF_MAX_DISPLAY do
+    for i = buffIndex, PLAYER_BUFF_MAX_DISPLAY do
         if (buffFrame.buffList[i]) then
             buffFrame.buffList[i]:Hide();
         end
@@ -145,6 +150,7 @@ function UpdateEnemyBuffs(nameplate, unit)
 
     buffFrame.filter = "HELPFUL";
 
+    local ENEMY_BUFF_MAX_DISPLAY = 4;
     local buffsPresentCount = 0;
     local buffsPresent = {};
     for i = 1, BUFF_MAX_DISPLAY do
@@ -162,7 +168,7 @@ function UpdateEnemyBuffs(nameplate, unit)
     end
 
     local buffIndex = buffsPresentCount + 1;
-    for i = 1, BUFF_MAX_DISPLAY do
+    for i = 1, ENEMY_BUFF_MAX_DISPLAY do
         local name, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
 
         if (name) then
@@ -197,7 +203,7 @@ function UpdateEnemyBuffs(nameplate, unit)
         end
     end
 
-    for i = buffIndex, BUFF_MAX_DISPLAY do
+    for i = buffIndex, ENEMY_BUFF_MAX_DISPLAY do
         if (buffFrame.buffList[i]) then
             buffFrame.buffList[i]:Hide();
         end
