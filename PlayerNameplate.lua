@@ -1,10 +1,9 @@
-local function SetupPlayerNamePlate(frame, setupOptions, frameOptions)
+hooksecurefunc("DefaultCompactNamePlateFrameSetupInternal", function(frame, setupOptions, frameOptions)
     if not frameOptions.displayName then
-        frame.healthBar:SetHeight(12)
+        setupOptions.healthBarHeight = 14;
+        frameOptions.healthBarColorOverride = nil;
+        frameOptions.useClassColors = true;
 
-        frameOptions.healthBarColorOverride = nil
-        frameOptions.useClassColors = true
+        DefaultCompactNamePlateFrameAnchorInternal(frame, setupOptions);
     end
-end
-
-hooksecurefunc("DefaultCompactNamePlateFrameSetupInternal", SetupPlayerNamePlate)
+end);

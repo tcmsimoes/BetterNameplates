@@ -1,14 +1,29 @@
 NameplatePlayerDebuffContainerMixin = {};
 
 function NameplatePlayerDebuffContainerMixin:OnLoad()
+    local _, myclass = UnitClass("player");
+
+    if myclass == "PALADIN" then
+        self:SetParent(ClassNameplateBarPaladinFrame);
+    elseif myclass == "ROGUE" or class == "DRUID" then
+        self:SetParent(ClassNameplateBarComboPointFrame);
+    elseif myclass == "DEATHKNIGHT" then
+        self:SetParent(DeathKnightResourceOverlayFrame);
+    elseif myclass == "MAGE" then
+        self:SetParent(ClassNameplateBarMageFrame);
+    elseif myclass == "WARLOCK" then
+        self:SetParent(ClassNameplateBarShardFrame);
+    elseif myclass == "MONK" then
+        self:SetParent(ClassNameplateBarChiFrame);
+    else
+        self:SetParent(ClassNameplateManaBarFrame);
+    end
+
+    self:ClearAllPoints();
+    self:SetPoint("TOPLEFT", self:GetParent(), "BOTTOMLEFT", 0, 0);
+
     self.buffList = {};
     self.BuffFrameUpdateTime = 0;
-    local _, _, class = UnitClass("player");
-    if ((class == 6) or (class == 9)) then
-        self:SetPoint("TOP", self:GetParent(), "BOTTOM", 0, 0);
-    else
-        self:SetPoint("TOP", self:GetParent(), "BOTTOM", 0, -4);
-    end
     self:RegisterEvent("UNIT_AURA");
 end
 

@@ -57,6 +57,10 @@ local visibleSpells = {
 -- monk
 ---- brewmaster
     ["Rushing Jade Wind"] = true,
+-- mage
+---- fire
+    ["Blazing Barrier"] = true,
+    ["Enhanced Pyrotechnics"] = true,
 };
 
 function UpdatePlayerBuffs(nameplate, unit)
@@ -224,14 +228,3 @@ end);
 
 local myFrame = CreateFrame("Frame");
 myFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
-
-myFrame:SetScript("OnEvent", function(self, event, ...)
-    if (event == "PLAYER_ENTERING_WORLD") then
-        local _, zone = IsInInstance();
-        if (zone == "pvp") then
-            zone = true;
-        else
-            zone = false;
-        end
-    end
-end);
