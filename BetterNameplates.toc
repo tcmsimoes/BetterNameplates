@@ -6,10 +6,9 @@
 ## LoadOnDemand: 0
 ## LoadWith: Blizzard_NamePlates
 
-BuffsOverride.lua
-TargetIndicator.lua
-ThreatColoring.lua
-PlayerNameplate.lua
-PlayerFrame.lua
+OverrideBuffs.lua
+OverrideColor.lua
+OverrideSize.lua
+DecoratePlayerFrame.lua
 
-PlayerDebuffsFrame.xml
+PlayerDebuffs.xml

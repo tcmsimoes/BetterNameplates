@@ -1,3 +1,28 @@
+local function updateHealthBarColor(frame, ...)
+    if UnitIsUnit(frame.unit, "player") then
+        local localizedClass, englishClass = UnitClass(frame.unit)
+        local classColor = RAID_CLASS_COLORS[englishClass]
+
+        if classColor.r ~= frame.healthBar.r or classColor.g ~= frame.healthBar.g or classColor.b ~= frame.healthBar.b then
+            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
+    
+            frame.healthBar.r, frame.healthBar.g, frame.healthBar.b = classColor.r, classColor.g, classColor.b
+        end
+    elseif frame.threat then
+        local forceUpdate = ...
+        local previousColor = frame.threat.previousColor
+        if forceUpdate or previousColor.r ~= frame.healthBar.r or previousColor.g ~= frame.healthBar.g or previousColor.b ~= frame.healthBar.b then
+            frame.healthBar:SetStatusBarColor(frame.threat.color.r, frame.threat.color.g, frame.threat.color.b)
+
+            frame.threat.previousColor.r = frame.healthBar.r
+            frame.threat.previousColor.g = frame.healthBar.g
+            frame.threat.previousColor.b = frame.healthBar.b
+        end
+    end
+end
+
+hooksecurefunc("CompactUnitFrame_UpdateHealthColor", updateHealthBarColor)
+
 local playerRole = 0
 local offTanks = {}
 local nonTanks = {}
@@ -8,26 +33,6 @@ local function resetFrame(frame)
         frame.healthBar:SetStatusBarColor(frame.healthBar.r, frame.healthBar.g, frame.healthBar.b)
     end
 end
-
-local function updateHealthColor(frame, ...)
-    if frame.threat then
-        local forceUpdate = ...
-        local previousColor = frame.threat.previousColor
-        if forceUpdate
-                or previousColor.r ~= frame.healthBar.r
-                or previousColor.g ~= frame.healthBar.g
-                or previousColor.b ~= frame.healthBar.b then
-            frame.healthBar:SetStatusBarColor(frame.threat.color.r, frame.threat.color.g, frame.threat.color.b)
-
-            frame.threat.previousColor.r = frame.healthBar.r
-            frame.threat.previousColor.g = frame.healthBar.g
-            frame.threat.previousColor.b = frame.healthBar.b
-        end
-    end
-end
-
--- This function is called constantly during combat. The color is only going to be reset after it was actually changed.
-hooksecurefunc("CompactUnitFrame_UpdateHealthColor", updateHealthColor)
 
 local function getGroupRoles()
     local collectedTanks = {}
@@ -82,6 +87,7 @@ local function threatSituation(monster)
             threatStatus = 5 -- ensure threat status if monster is targeting a tank
         end
     end
+
     -- store if the player is tanking, or store their threat value if higher than others
     isTanking, status, _, _, threatValue = UnitDetailedThreatSituation("player", monster)
     if isTanking then
@@ -90,6 +96,7 @@ local function threatSituation(monster)
     elseif status then
         playerValue = threatValue
     end
+
     -- store if a non-tank is tanking, or store their threat value if higher than others
     for _, unit in ipairs(nonTanks) do
         isTanking, status, _, _, threatValue = UnitDetailedThreatSituation(unit, monster)
@@ -100,22 +107,22 @@ local function threatSituation(monster)
             nonTankValue = threatValue
         end
     end
+
+    -- ensure threat status if monster is targeting a friend
     if threatStatus < 0 and UnitIsFriend("player", monster .. "target") then
-        threatStatus = 0 -- ensure threat status if monster is targeting a friend
+        threatStatus = 0
         tankValue    = 0
         offTankValue = 0
         playerValue  = 0
         nonTankValue = 0
     end
-    -- deliver the stored information describing threat situation for this monster
+
     return threatStatus, tankValue, offTankValue, playerValue, nonTankValue
 end
 
 local function updateThreatColor(frame)
-    local unit = frame.unit -- variable also reused for the threat ratio further down
-
-    if UnitCanAttack("player", unit) and (UnitAffectingCombat(unit) or UnitReaction(unit, "player") < 4)
-        and not UnitIsPlayer(unit) and not CompactUnitFrame_IsTapDenied(frame) then
+    if UnitCanAttack("player", frame.unit) and (UnitAffectingCombat(frame.unit) or UnitReaction(frame.unit, "player") < 4)
+        and not UnitIsPlayer(frame.unit) and not CompactUnitFrame_IsTapDenied(frame) then
         --[[Custom threat situation nameplate coloring:
            -1 = no threat data (monster not in combat).
             0 = a non tank is tanking by threat.
@@ -125,11 +132,11 @@ local function updateThreatColor(frame)
            +4 = another tank is tanking by force.
            +5 = another tank is tanking by threat.
         ]]--
-        local status, tank, offtank, player, nontank = threatSituation(unit)
+        local status, tank, offtank, player, nontank = threatSituation(frame.unit)
 
         -- only recalculate color when situation was actually changed with gradient toward sibling color
         if not frame.threat or frame.threat.lastStatus ~= status then
-            local r, g, b = 1.0, 0.0, 0.0   -- red outside combat
+            local r, g, b = 1.0, 0.0, 0.0       -- red outside combat
 
             if playerRole == "TANK" then
                 if status >= 5 then             -- another tank tanking by threat
@@ -143,13 +150,13 @@ local function updateThreatColor(frame)
                 elseif status >= 1 then         -- others tanking by force
                     r, g, b = 1.00, 0.00, 0.00  -- red     taunt now
                 elseif status >= 0 then         -- others tanking by threat
-                    r, g, b = 1.00, 1.00, 0.47  -- yellow  taunt?
+                    r, g, b = 1.00, 0.30, 0.00  -- orange  taunt?
                 end
             elseif next(nonTanks) then
                 if status >= 4 then             -- tanks tanking by threat or by force
                     r, g, b = 0.00, 0.50, 0.01  -- green   no problem
                 elseif status >= 2 then         -- player tanking by force
-                    r, g, b =1.00, 0.50, 0.00   -- orange  player stealing aggro
+                    r, g, b = 1.00, 0.30, 0.00  -- orange  player stealing aggro
                 elseif status >= 0 then         -- others tanking by threat or by force
                     r, g, b = 1.00, 0.60, 0.00  -- green   no problem
                 end
@@ -167,7 +174,7 @@ local function updateThreatColor(frame)
             frame.threat.color.g = g
             frame.threat.color.b = b
 
-            updateHealthColor(frame, true)
+            updateHealthBarColor(frame, true)
         end
     else
         resetFrame(frame)
@@ -190,11 +197,12 @@ myFrame:SetScript("OnEvent", function(self, event, arg1)
                 updateThreatColor(nameplate.UnitFrame)
             end
         end
+         -- to ensure colors update when mob is back at their spawn
         if event ~= "PLAYER_REGEN_ENABLED" then
             callback()
         else
             C_Timer.NewTimer(5.0, callback)
-        end -- to ensure colors update when mob is back at their spawn
+        end
     elseif event == "NAME_PLATE_UNIT_ADDED" then
         local callback = function()
             local nameplate = C_NamePlate.GetNamePlateForUnit(arg1)
