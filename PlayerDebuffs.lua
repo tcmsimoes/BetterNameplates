@@ -2,6 +2,7 @@ NameplatePlayerDebuffContainerMixin = {};
 
 function NameplatePlayerDebuffContainerMixin:OnLoad()
     local _, myclass = UnitClass("player");
+    local yOffset = 0;
 
     if myclass == "PALADIN" then
         self:SetParent(ClassNameplateBarPaladinFrame);
@@ -17,10 +18,11 @@ function NameplatePlayerDebuffContainerMixin:OnLoad()
         self:SetParent(ClassNameplateBarChiFrame);
     else
         self:SetParent(ClassNameplateManaBarFrame);
+        yOffset = -4;
     end
 
     self:ClearAllPoints();
-    self:SetPoint("TOPLEFT", self:GetParent(), "BOTTOMLEFT", 0, 0);
+    self:SetPoint("TOPLEFT", self:GetParent(), "BOTTOMLEFT", 0, yOffset);
 
     self.buffList = {};
     self.BuffFrameUpdateTime = 0;
