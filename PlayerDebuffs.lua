@@ -2,27 +2,26 @@ NameplatePlayerDebuffContainerMixin = {};
 
 function NameplatePlayerDebuffContainerMixin:OnLoad()
     local _, myclass = UnitClass("player");
-    local yOffset = 0;
+    local myspec = GetSpecialization();
+    local xOffset, yOffset = -1, -5;
 
     if myclass == "PALADIN" then
-        self:SetParent(ClassNameplateBarPaladinFrame);
-    elseif myclass == "ROGUE" or class == "DRUID" then
-        self:SetParent(ClassNameplateBarComboPointFrame);
+        yOffset = -16;
+    elseif myclass == "ROGUE" or (class == "DRUID" and myspec == 2) then
+        yOffset = -16;
     elseif myclass == "DEATHKNIGHT" then
-        self:SetParent(DeathKnightResourceOverlayFrame);
+        yOffset = -23;
     elseif myclass == "MAGE" then
-        self:SetParent(ClassNameplateBarMageFrame);
+        yOffset = -16;
     elseif myclass == "WARLOCK" then
-        self:SetParent(ClassNameplateBarShardFrame);
-    elseif myclass == "MONK" then
-        self:SetParent(ClassNameplateBarChiFrame);
-    else
-        self:SetParent(ClassNameplateManaBarFrame);
-        yOffset = -4;
+        yOffset = -16;
+    elseif myclass == "MONK" and (myspec == SPEC_MONK_WINDWALKER or myspec == SPEC_MONK_BREWMASTER) then
+        yOffset = -16;
     end
 
+    self:SetParent(ClassNameplateManaBarFrame);
     self:ClearAllPoints();
-    self:SetPoint("TOPLEFT", self:GetParent(), "BOTTOMLEFT", 0, yOffset);
+    self:SetPoint("TOPLEFT", self:GetParent(), "BOTTOMLEFT", xOffset, yOffset);
 
     self.buffList = {};
     self.BuffFrameUpdateTime = 0;
