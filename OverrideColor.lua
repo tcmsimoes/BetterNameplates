@@ -1,22 +1,13 @@
 local function updateHealthBarColor(frame, ...)
-    if UnitIsUnit(frame.unit, "player") then
-        local localizedClass, englishClass = UnitClass(frame.unit)
-        local classColor = RAID_CLASS_COLORS[englishClass]
-
-        if classColor.r ~= frame.healthBar.r or classColor.g ~= frame.healthBar.g or classColor.b ~= frame.healthBar.b then
-            frame.healthBar:SetStatusBarColor(classColor.r, classColor.g, classColor.b)
-    
-            frame.healthBar.r, frame.healthBar.g, frame.healthBar.b = classColor.r, classColor.g, classColor.b
-        end
-    elseif frame.threat then
+    if frame.colorOverride then
         local forceUpdate = ...
-        local previousColor = frame.threat.previousColor
+        local previousColor = frame.colorOverride.previousColor
         if forceUpdate or previousColor.r ~= frame.healthBar.r or previousColor.g ~= frame.healthBar.g or previousColor.b ~= frame.healthBar.b then
-            frame.healthBar:SetStatusBarColor(frame.threat.color.r, frame.threat.color.g, frame.threat.color.b)
+            frame.healthBar:SetStatusBarColor(frame.colorOverride.color.r, frame.colorOverride.color.g, frame.colorOverride.color.b)
 
-            frame.threat.previousColor.r = frame.healthBar.r
-            frame.threat.previousColor.g = frame.healthBar.g
-            frame.threat.previousColor.b = frame.healthBar.b
+            frame.colorOverride.previousColor.r = frame.healthBar.r
+            frame.colorOverride.previousColor.g = frame.healthBar.g
+            frame.colorOverride.previousColor.b = frame.healthBar.b
         end
     end
 end
@@ -28,10 +19,28 @@ local offTanks = {}
 local nonTanks = {}
 
 local function resetFrame(frame)
-    if frame.threat then
-        frame.threat = nil
+    if frame.colorOverride then
+        frame.colorOverride = nil
         frame.healthBar:SetStatusBarColor(frame.healthBar.r, frame.healthBar.g, frame.healthBar.b)
     end
+end
+
+local function classColorFrame(frame)
+    local localizedClass, englishClass = UnitClass(frame.unit)
+    local classColor = RAID_CLASS_COLORS[englishClass]
+
+    if not frame.colorOverride then
+        frame.colorOverride = {
+            ["color"] = {},
+            ["previousColor"] = {},
+        };
+    end
+
+    frame.colorOverride.color.r = classColor.r
+    frame.colorOverride.color.g = classColor.g
+    frame.colorOverride.color.b = classColor.b
+
+    updateHealthBarColor(frame, true)
 end
 
 local function getGroupRoles()
@@ -135,7 +144,7 @@ local function updateThreatColor(frame)
         local status, tank, offtank, player, nontank = threatSituation(frame.unit)
 
         -- only recalculate color when situation was actually changed with gradient toward sibling color
-        if not frame.threat or frame.threat.lastStatus ~= status then
+        if not frame.colorOverride or frame.colorOverride.lastStatus ~= status then
             local r, g, b = 1.0, 0.0, 0.0       -- red outside combat
 
             if playerRole == "TANK" then
@@ -162,17 +171,17 @@ local function updateThreatColor(frame)
                 end
             end
 
-            if not frame.threat then
-                frame.threat = {
+            if not frame.colorOverride then
+                frame.colorOverride = {
                     ["color"] = {},
                     ["previousColor"] = {},
                 };
             end
 
-            frame.threat.lastStatus = status
-            frame.threat.color.r = r
-            frame.threat.color.g = g
-            frame.threat.color.b = b
+            frame.colorOverride.lastStatus = status
+            frame.colorOverride.color.r = r
+            frame.colorOverride.color.g = g
+            frame.colorOverride.color.b = b
 
             updateHealthBarColor(frame, true)
         end
@@ -207,7 +216,11 @@ myFrame:SetScript("OnEvent", function(self, event, arg1)
         local callback = function()
             local nameplate = C_NamePlate.GetNamePlateForUnit(arg1)
             if nameplate then
-                updateThreatColor(nameplate.UnitFrame)
+                if not UnitIsPlayer(nameplate.UnitFrame.unit) then
+                    updateThreatColor(nameplate.UnitFrame)
+                else
+                    classColorFrame(nameplate.UnitFrame)
+                end
             end
         end
         callback()

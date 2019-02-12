@@ -16,7 +16,7 @@ function NameplatePlayerDebuffContainerMixin:OnLoad()
     elseif myclass == "WARLOCK" then
         yOffset = -16;
     elseif myclass == "MONK" and (myspec == SPEC_MONK_WINDWALKER or myspec == SPEC_MONK_BREWMASTER) then
-        yOffset = -16;
+        yOffset = -23;
     end
 
     self:SetParent(ClassNameplateManaBarFrame);
