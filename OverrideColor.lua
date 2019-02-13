@@ -25,24 +25,6 @@ local function resetFrame(frame)
     end
 end
 
-local function classColorFrame(frame)
-    local localizedClass, englishClass = UnitClass(frame.unit)
-    local classColor = RAID_CLASS_COLORS[englishClass]
-
-    if not frame.colorOverride then
-        frame.colorOverride = {
-            ["color"] = {},
-            ["previousColor"] = {},
-        };
-    end
-
-    frame.colorOverride.color.r = classColor.r
-    frame.colorOverride.color.g = classColor.g
-    frame.colorOverride.color.b = classColor.b
-
-    updateHealthBarColor(frame, true)
-end
-
 local function getGroupRoles()
     local collectedTanks = {}
     local collectedOther = {}
@@ -185,6 +167,22 @@ local function updateThreatColor(frame)
 
             updateHealthBarColor(frame, true)
         end
+    elseif UnitIsPlayer(frame.unit) then
+        local localizedClass, englishClass = UnitClass(frame.unit)
+        local classColor = RAID_CLASS_COLORS[englishClass]
+
+        if not frame.colorOverride then
+            frame.colorOverride = {
+                ["color"] = {},
+                ["previousColor"] = {},
+            };
+        end
+
+        frame.colorOverride.color.r = classColor.r
+        frame.colorOverride.color.g = classColor.g
+        frame.colorOverride.color.b = classColor.b
+
+        updateHealthBarColor(frame, true)
     else
         resetFrame(frame)
     end
@@ -216,11 +214,7 @@ myFrame:SetScript("OnEvent", function(self, event, arg1)
         local callback = function()
             local nameplate = C_NamePlate.GetNamePlateForUnit(arg1)
             if nameplate then
-                if not UnitIsPlayer(nameplate.UnitFrame.unit) then
-                    updateThreatColor(nameplate.UnitFrame)
-                else
-                    classColorFrame(nameplate.UnitFrame)
-                end
+                updateThreatColor(nameplate.UnitFrame)
             end
         end
         callback()
