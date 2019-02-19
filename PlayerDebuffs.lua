@@ -1,27 +1,45 @@
 NameplatePlayerDebuffContainerMixin = {};
 
-function NameplatePlayerDebuffContainerMixin:OnLoad()
+function NameplatePlayerDebuffContainerMixin:Setup()
     local _, myclass = UnitClass("player");
     local myspec = GetSpecialization();
     local xOffset, yOffset = -1, -5;
 
-    if myclass == "PALADIN" then
-        yOffset = -16;
-    elseif myclass == "ROGUE" or (class == "DRUID" and myspec == 2) then
-        yOffset = -16;
-    elseif myclass == "DEATHKNIGHT" then
+    if (myclass == "DEATHKNIGHT") then
         yOffset = -23;
-    elseif myclass == "MAGE" then
-        yOffset = -16;
-    elseif myclass == "WARLOCK" then
-        yOffset = -16;
-    elseif myclass == "MONK" and (myspec == SPEC_MONK_WINDWALKER or myspec == SPEC_MONK_BREWMASTER) then
+    elseif (myclass == "PALADIN") then
         yOffset = -23;
+    elseif (myclass == "WARLOCK") then
+        yOffset = -23;
+    elseif (myclass == "ROGUE") then
+        yOffset = -16;
+    elseif (class == "DRUID") then
+        if (myspec == 2) then
+            yOffset = -16;
+        else
+            yOffset = -5;
+        end
+        
+        self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
+    elseif (myclass == "MONK") then
+        if (myspec == SPEC_MONK_WINDWALKER) then
+            yOffset = -16;
+        elseif (myspec == SPEC_MONK_BREWMASTER) then
+            yOffset = -10;
+        else
+            yOffset = -5;
+        end
+
+        self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
     end
 
     self:SetParent(ClassNameplateManaBarFrame);
     self:ClearAllPoints();
     self:SetPoint("TOPLEFT", self:GetParent(), "BOTTOMLEFT", xOffset, yOffset);
+end
+
+function NameplatePlayerDebuffContainerMixin:OnLoad()
+    self:Setup();
 
     self.buffList = {};
     self.BuffFrameUpdateTime = 0;
@@ -35,6 +53,8 @@ function NameplatePlayerDebuffContainerMixin:OnEvent(event, ...)
         if (UnitIsUnit("player", unit)) then
             self:UpdateBuffs(unit);
         end
+    elseif (event == "PLAYER_SPECIALIZATION_CHANGED") then
+        self:Setup();
     end
 end
 
