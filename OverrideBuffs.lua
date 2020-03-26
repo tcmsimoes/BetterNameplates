@@ -36,6 +36,9 @@ local visibleSpells = {
     ["Obliteration"] = true,
     ["Cold Heart"] = true,
     ["Empower Rune Weapon"] = true,
+---- unholy
+    ["Festermight"] = true,
+    ["Helchains"] = true,
 -- warrior
     ["Victorious"] = true,
 ---- fury
@@ -47,6 +50,9 @@ local visibleSpells = {
     ["Shattered Defenses"] = true,
     ["Weighted Blade"] = true,
     ["Executioner's Precision"] = true,
+---- fury
+-- paladin
+    ["Selfless Healer"] = true,
 -- druid
 ---- balance
     ["Starfall"] = true,
@@ -57,6 +63,8 @@ local visibleSpells = {
 -- monk
 ---- brewmaster
     ["Rushing Jade Wind"] = true,
+---- windwalker
+    ["Hit Combo"] = true,
 -- mage
 ---- fire
     ["Blazing Barrier"] = true,
@@ -173,7 +181,7 @@ function UpdateEnemyBuffs(nameplate, unit)
 
     local buffIndex = buffsPresentCount + 1;
     for i = 1, ENEMY_BUFF_MAX_DISPLAY do
-        local name, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
+        local name, texture, count, _, duration, expirationTime, caster, isStealable, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
 
         if (name) then
             if (not buffFrame.buffList[buffIndex]) then
@@ -191,7 +199,11 @@ function UpdateEnemyBuffs(nameplate, unit)
                 });
                 buff.hasBackdrop = true;
             end
-            buff:SetBackdropColor(1.0, 0.0, 0.0, 0.4);
+            if (not isStealable) then
+                buff:SetBackdropColor(1.0, 0.0, 0.0, 0.4);
+            else
+                buff:SetBackdropColor(0.0, 0.0, 1.0, 0.4);
+            end
             buff:SetScale(1.125);
             if (count > 1) then
                 buff.CountFrame.Count:SetText(count);
