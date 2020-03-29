@@ -199,10 +199,10 @@ function UpdateEnemyBuffs(nameplate, unit)
                 });
                 buff.hasBackdrop = true;
             end
-            if (not isStealable) then
-                buff:SetBackdropColor(1.0, 0.0, 0.0, 0.4);
-            else
+            if (isStealable) then
                 buff:SetBackdropColor(0.0, 0.0, 1.0, 0.4);
+            else
+                buff:SetBackdropColor(1.0, 0.0, 0.0, 0.4);
             end
             buff:SetScale(1.125);
             if (count > 1) then

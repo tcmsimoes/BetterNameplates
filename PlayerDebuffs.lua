@@ -1,27 +1,31 @@
 NameplatePlayerDebuffContainerMixin = {};
 
 function NameplatePlayerDebuffContainerMixin:Setup()
-    local _, myclass = UnitClass("player");
-    local myspec = GetSpecialization();
+    local _, class = UnitClass("player");
+    
     local xOffset, yOffset = -1, -5;
 
-    if (myclass == "DEATHKNIGHT") then
+    if (class == "DEATHKNIGHT") then
         yOffset = -23;
-    elseif (myclass == "PALADIN") then
+    elseif (class == "PALADIN") then
         yOffset = -23;
-    elseif (myclass == "WARLOCK") then
+    elseif (class == "WARLOCK") then
         yOffset = -23;
-    elseif (myclass == "ROGUE") then
+    elseif (class == "ROGUE") then
         yOffset = -16;
     elseif (class == "DRUID") then
-        if (myspec == 2) then
+        local shape = GetShapeshiftForm();
+
+        if (shape == 2) then
             yOffset = -16;
         else
             yOffset = -5;
         end
-        
-        self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
-    elseif (myclass == "MONK") then
+
+        self:RegisterEvent("UPDATE_SHAPESHIFT_FORM");
+    elseif (class == "MONK") then
+        local myspec = GetSpecialization();
+
         if (myspec == SPEC_MONK_WINDWALKER) then
             yOffset = -16;
         elseif (myspec == SPEC_MONK_BREWMASTER) then
@@ -34,6 +38,10 @@ function NameplatePlayerDebuffContainerMixin:Setup()
     end
 
     self:SetParent(ClassNameplateManaBarFrame);
+    self:UpdateAnchors(xOffset, yOffset);
+end
+
+function NameplatePlayerDebuffContainerMixin:UpdateAnchors(xOffset, yOffset)
     self:ClearAllPoints();
     self:SetPoint("TOPLEFT", self:GetParent(), "BOTTOMLEFT", xOffset, yOffset);
 end
@@ -55,6 +63,8 @@ function NameplatePlayerDebuffContainerMixin:OnEvent(event, ...)
         end
     elseif (event == "PLAYER_SPECIALIZATION_CHANGED") then
         self:Setup();
+    elseif (event == "UPDATE_SHAPESHIFT_FORM") then
+        self:Setup();
     end
 end
 
@@ -73,7 +83,7 @@ function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
     local PLAYER_DEBUFF_MAX_DISPLAY = 8;
     local buffIndex = 1;
     for i = 1, PLAYER_DEBUFF_MAX_DISPLAY do
-        local name, texture, count, debuffType, duration, expirationTime, caster, _, _, spellId, _, isBossDebuff, _, _ = UnitAura(self.unit, i, self.filter);
+        local name, texture, count, debuffType, duration, expirationTime, caster, isStealable, _, spellId, _, isBossDebuff, _, _ = UnitAura(self.unit, i, self.filter);
 
         if (name) then
             if (not self.buffList[buffIndex]) then
@@ -84,14 +94,16 @@ function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
             local buff = self.buffList[buffIndex];
             buff:SetID(i);
             buff.Icon:SetTexture(texture);
-            if (isBossDebuff) then
-                if (not buff.hasBackdrop) then
-                    buff:SetBackdrop({
-                        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-                        insets = {top = -1, bottom = -1, left = -1, right = -1}
-                    });
-                    buff.hasBackdrop = true;
-                end
+            if (not buff.hasBackdrop) then
+                buff:SetBackdrop({
+                    bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+                    insets = {top = -1, bottom = -1, left = -1, right = -1}
+                });
+                buff.hasBackdrop = true;
+            end
+            if (isStealable) then
+                buff:SetBackdropColor(0.0, 0.0, 1.0, 0.4);
+            elseif (isBossDebuff) then
                 buff:SetBackdropColor(1.0, 0.0, 0.0, 0.4);
             else
                 buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
