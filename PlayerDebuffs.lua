@@ -3,7 +3,7 @@ NameplatePlayerDebuffContainerMixin = {};
 function NameplatePlayerDebuffContainerMixin:Setup()
     local _, class = UnitClass("player");
     
-    local xOffset, yOffset = -1, -5;
+    local xOffset, yOffset = -1, -3;
 
     if (class == "DEATHKNIGHT") then
         yOffset = -23;
@@ -18,8 +18,6 @@ function NameplatePlayerDebuffContainerMixin:Setup()
 
         if (shape == 2) then
             yOffset = -16;
-        else
-            yOffset = -5;
         end
 
         self:RegisterEvent("UPDATE_SHAPESHIFT_FORM");
@@ -30,8 +28,6 @@ function NameplatePlayerDebuffContainerMixin:Setup()
             yOffset = -16;
         elseif (myspec == 1) then
             yOffset = -10;
-        else
-            yOffset = -5;
         end
 
         self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
