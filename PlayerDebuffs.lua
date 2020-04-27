@@ -26,9 +26,9 @@ function NameplatePlayerDebuffContainerMixin:Setup()
     elseif (class == "MONK") then
         local myspec = GetSpecialization();
 
-        if (myspec == SPEC_MONK_WINDWALKER) then
+        if (myspec == 3) then
             yOffset = -16;
-        elseif (myspec == SPEC_MONK_BREWMASTER) then
+        elseif (myspec == 1) then
             yOffset = -10;
         else
             yOffset = -5;
