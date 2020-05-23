@@ -13,6 +13,9 @@ function NameplatePlayerDebuffContainerMixin:Setup()
         yOffset = -23;
     elseif (class == "ROGUE") then
         yOffset = -16;
+    elseif (class == "HUNTER") then
+        self:createPetHealthBar();
+        yOffset = -8;
     elseif (class == "DRUID") then
         local shape = GetShapeshiftForm();
 
@@ -124,4 +127,46 @@ function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
             self.buffList[i]:Hide();
         end
     end
+end
+
+function NameplatePlayerDebuffContainerMixin:createPetHealthBar()
+    if (self.petHealBar) then
+        return;
+    end
+
+    local bar = CreateFrame('StatusBar', nil, self);
+    bar:SetPoint("TOPLEFT", ClassNameplateManaBarFrame, "BOTTOMLEFT", 0, 0);
+    bar:SetSize(self:GetWidth(), 6);
+    bar:SetStatusBarTexture([[Interface\TargetingFrame\UI-TargetingFrame-BarFill]]);
+    bar:SetStatusBarColor(0.7, 0, 0.7);
+    bar:SetOrientation('HORIZONTAL');
+    bar:SetMovable(false);
+    bar:EnableMouse(false);
+    bar.unit = "pet";
+
+    bar.border = CreateFrame("Frame", nil, bar);
+    bar.border:SetPoint("TOPLEFT", bar, "TOPLEFT", -1, 1);
+    bar.border:SetSize(bar:GetWidth(), bar:GetHeight() + 2);
+    bar.border:SetBackdrop({
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeSize = 1});
+    bar.border:SetBackdropBorderColor(0, 0, 0, 1.0);
+
+    bar:SetScript('OnEvent', function(self, event, ...)
+        if event == 'UNIT_MAXHEALTH' then
+            self:SetMinMaxValues(0, UnitHealthMax(self.unit));
+        elseif event == 'UNIT_HEALTH' or event == 'UNIT_HEALTH_FREQUENT' then
+            self:SetValue(UnitHealth(self.unit));
+        elseif event == 'PLAYER_ENTERING_WORLD' then
+            self:SetMinMaxValues(0, UnitHealthMax(self.unit));
+            self:SetValue(UnitHealth(self.unit));
+        end
+    end)
+
+    bar:RegisterUnitEvent('UNIT_MAXHEALTH', bar.unit);
+    bar:RegisterUnitEvent('UNIT_HEALTH', bar.unit);
+    bar:RegisterUnitEvent('UNIT_HEALTH_FREQUENT', bar.unit);
+    bar:RegisterEvent('PLAYER_ENTERING_WORLD');
+
+    self.petHealBar = bar;
 end
