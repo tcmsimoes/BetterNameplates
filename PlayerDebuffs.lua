@@ -136,9 +136,9 @@ function NameplatePlayerDebuffContainerMixin:createPetHealthBar()
 
     local bar = CreateFrame('StatusBar', nil, self);
     bar:SetPoint("TOPLEFT", ClassNameplateManaBarFrame, "BOTTOMLEFT", 0, 0);
-    bar:SetSize(self:GetWidth(), 6);
+    bar:SetSize(self:GetWidth(), 4);
     bar:SetStatusBarTexture([[Interface\TargetingFrame\UI-TargetingFrame-BarFill]]);
-    bar:SetStatusBarColor(0.7, 0, 0.7);
+    bar:SetStatusBarColor(0.6, 1.0, 0.8);
     bar:SetOrientation('HORIZONTAL');
     bar:SetMovable(false);
     bar:EnableMouse(false);
