@@ -157,7 +157,7 @@ function NameplatePlayerDebuffContainerMixin:createPetHealthBar()
             self:SetMinMaxValues(0, UnitHealthMax(self.unit));
         elseif event == 'UNIT_HEALTH' or event == 'UNIT_HEALTH_FREQUENT' then
             self:SetValue(UnitHealth(self.unit));
-        elseif event == 'PLAYER_ENTERING_WORLD' then
+        elseif event == 'UNIT_PET' or event == 'PLAYER_ENTERING_WORLD' then
             self:SetMinMaxValues(0, UnitHealthMax(self.unit));
             self:SetValue(UnitHealth(self.unit));
         end
@@ -166,6 +166,7 @@ function NameplatePlayerDebuffContainerMixin:createPetHealthBar()
     bar:RegisterUnitEvent('UNIT_MAXHEALTH', bar.unit);
     bar:RegisterUnitEvent('UNIT_HEALTH', bar.unit);
     bar:RegisterUnitEvent('UNIT_HEALTH_FREQUENT', bar.unit);
+    bar:RegisterEvent('UNIT_PET');
     bar:RegisterEvent('PLAYER_ENTERING_WORLD');
 
     self.petHealBar = bar;
