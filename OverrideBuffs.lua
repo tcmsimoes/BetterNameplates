@@ -86,9 +86,8 @@ function UpdatePlayerBuffs(nameplate, unit)
     for i = 1, PLAYER_BUFF_MAX_DISPLAY do
         local buff = buffFrame.buffList[i];
         if (buff) then
-            if (buff.hasBackdrop) then
-                buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
-                buff:SetScale(1.0);
+            if (buff.border) then
+                buff.border:Hide();
             end
             if (buff:IsShown()) then
                 buffsPresent[buff:GetID()] = true;
@@ -124,7 +123,7 @@ function UpdatePlayerBuffs(nameplate, unit)
 
         if (spell.name) then
             if (not buffFrame.buffList[buffIndex]) then
-                buffFrame.buffList[buffIndex] = CreateFrame("Frame", buffFrame:GetParent():GetName() .. "PlayerBuff" .. buffIndex, buffFrame, "NameplateBuffButtonTemplate");
+                buffFrame.buffList[buffIndex] = CreateFrame("Frame", nil, buffFrame, "NameplateBuffButtonTemplate");
                 buffFrame.buffList[buffIndex]:SetMouseClickEnabled(false);
                 buffFrame.buffList[buffIndex].layoutIndex = buffIndex;
             end
@@ -168,9 +167,8 @@ function UpdateEnemyBuffs(nameplate, unit)
     for i = 1, BUFF_MAX_DISPLAY do
         local buff = buffFrame.buffList[i];
         if (buff) then
-            if (buff.hasBackdrop) then
-                buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
-                buff:SetScale(1.0);
+            if (buff.border) then
+                buff.border:Hide();
             end
             if (buff:IsShown()) then
                 buffsPresent[buff:GetID()] = true;
@@ -185,31 +183,32 @@ function UpdateEnemyBuffs(nameplate, unit)
 
         if (name) then
             if (not buffFrame.buffList[buffIndex]) then
-                buffFrame.buffList[buffIndex] = CreateFrame("Frame", buffFrame:GetParent():GetName() .. "EnemyBuff" .. buffIndex, buffFrame, "NameplateBuffButtonTemplate");
+                buffFrame.buffList[buffIndex] = CreateFrame("Frame", nil, buffFrame, "NameplateBuffButtonTemplate");
                 buffFrame.buffList[buffIndex]:SetMouseClickEnabled(false);
                 buffFrame.buffList[buffIndex].layoutIndex = buffIndex;
             end
             local buff = buffFrame.buffList[buffIndex];
             buff:SetID(i);
             buff.Icon:SetTexture(texture);
-            if (not buff.hasBackdrop) then
-                buff:SetBackdrop({
-                    bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-                    insets = {top = -1, bottom = -1, left = -1, right = -1}
+            if (not buff.border) then
+                buff.border = CreateFrame("Frame", nil, buff, "BackdropTemplate");
+                buff.border:SetAllPoints(buff);
+                buff.border:SetBackdrop({
+                    edgeFile = [[Interface/Buttons/WHITE8X8]], 
+                    edgeSize = 1, 
                 });
-                buff.hasBackdrop = true;
             end
-            if (isStealable) then
-                buff:SetBackdropColor(0.0, 0.0, 1.0, 0.4);
-            else
-                buff:SetBackdropColor(1.0, 0.0, 0.0, 0.4);
-            end
-            buff:SetScale(1.125);
+            buff.border:Show();
             if (count > 1) then
                 buff.CountFrame.Count:SetText(count);
                 buff.CountFrame.Count:Show();
             else
                 buff.CountFrame.Count:Hide();
+            end
+            if (isStealable) then
+                buff.border:SetBackdropBorderColor(0.0, 0.0, 1.0, 0.7);
+            else
+                buff.border:SetBackdropBorderColor(1.0, 0.0, 0.0, 0.7);
             end
 
             CooldownFrame_Set(buff.Cooldown, expirationTime - duration, duration, duration > 0, true);
