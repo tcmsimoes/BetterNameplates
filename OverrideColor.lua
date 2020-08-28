@@ -19,7 +19,7 @@ local offTanks = {}
 local nonTanks = {}
 
 local function resetFrame(frame)
-    if frame.colorOverride then
+    if frame and frame.colorOverride then
         frame.colorOverride = nil
         frame.healthBar:SetStatusBarColor(frame.healthBar.r, frame.healthBar.g, frame.healthBar.b)
     end

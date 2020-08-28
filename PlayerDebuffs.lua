@@ -86,27 +86,13 @@ function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
 
         if (name) then
             if (not self.buffList[buffIndex]) then
-                self.buffList[buffIndex] = CreateFrame("Frame", self:GetParent():GetName() .. "PlayerDebuff" .. buffIndex, self, "NameplateBuffButtonTemplate");
+                self.buffList[buffIndex] = CreateFrame("Frame", nil, self, "NameplateBuffButtonTemplate");
                 self.buffList[buffIndex]:SetMouseClickEnabled(false);
                 self.buffList[buffIndex].layoutIndex = buffIndex;
             end
             local buff = self.buffList[buffIndex];
             buff:SetID(i);
             buff.Icon:SetTexture(texture);
-            if (not buff.hasBackdrop) then
-                buff:SetBackdrop({
-                    bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-                    insets = {top = -1, bottom = -1, left = -1, right = -1}
-                });
-                buff.hasBackdrop = true;
-            end
-            if (isStealable) then
-                buff:SetBackdropColor(0.0, 0.0, 1.0, 0.4);
-            elseif (isBossDebuff) then
-                buff:SetBackdropColor(1.0, 0.0, 0.0, 0.4);
-            else
-                buff:SetBackdropColor(0.0, 0.0, 0.0, 0.0);
-            end
             if (count > 1) then
                 buff.CountFrame.Count:SetText(count);
                 buff.CountFrame.Count:Show();
@@ -149,7 +135,8 @@ function NameplatePlayerDebuffContainerMixin:createPetHealthBar()
     bar.border:SetSize(bar:GetWidth(), bar:GetHeight() + 2);
     bar.border:SetBackdrop({
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeSize = 1});
+        edgeSize = 1
+    });
     bar.border:SetBackdropBorderColor(0, 0, 0, 1.0);
 
     bar:SetScript('OnEvent', function(self, event, ...)
