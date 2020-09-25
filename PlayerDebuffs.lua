@@ -152,7 +152,6 @@ function NameplatePlayerDebuffContainerMixin:createPetHealthBar()
 
     bar:RegisterUnitEvent('UNIT_MAXHEALTH', bar.unit);
     bar:RegisterUnitEvent('UNIT_HEALTH', bar.unit);
-    bar:RegisterUnitEvent('UNIT_HEALTH_FREQUENT', bar.unit);
     bar:RegisterEvent('UNIT_PET');
     bar:RegisterEvent('PLAYER_ENTERING_WORLD');
 
