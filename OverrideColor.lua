@@ -1,13 +1,24 @@
 local function updateHealthBarColor(frame, ...)
     if frame.colorOverride then
         local forceUpdate = ...
-        local previousColor = frame.colorOverride.previousColor
-        if forceUpdate or previousColor.r ~= frame.healthBar.r or previousColor.g ~= frame.healthBar.g or previousColor.b ~= frame.healthBar.b then
-            frame.healthBar:SetStatusBarColor(frame.colorOverride.color.r, frame.colorOverride.color.g, frame.colorOverride.color.b)
+        local r = frame.healthBar.r
+        local g = frame.healthBar.g
+        local b = frame.healthBar.b
 
-            frame.colorOverride.previousColor.r = frame.healthBar.r
-            frame.colorOverride.previousColor.g = frame.healthBar.g
-            frame.colorOverride.previousColor.b = frame.healthBar.b
+        if forceUpdate 
+          or (frame.healthBar.r == 1.0 and frame.healthBar.g == 0.0 and frame.healthBar.b == 0.0) 
+          or (frame.healthBar.r == 0.0 and frame.healthBar.g == 1.0 and frame.healthBar.b == 0.0) then
+            r = frame.colorOverride.color.r
+            g = frame.colorOverride.color.g
+            b = frame.colorOverride.color.b
+        end
+
+        if frame.colorOverride.previousColor.r ~= r or frame.colorOverride.previousColor.g ~= g or frame.colorOverride.previousColor.b ~= b then
+            frame.healthBar:SetStatusBarColor(r, g, b)
+
+            frame.colorOverride.previousColor.r = r
+            frame.colorOverride.previousColor.g = g
+            frame.colorOverride.previousColor.b = b
         end
     end
 end
@@ -112,7 +123,27 @@ local function threatSituation(monster)
 end
 
 local function updateThreatColor(frame)
-    if UnitCanAttack("player", frame.unit) and (UnitAffectingCombat(frame.unit) or UnitReaction(frame.unit, "player") < 4)
+    if UnitIsPlayer(frame.unit) then
+        local localizedClass, englishClass = UnitClass(frame.unit)
+        local classColor = RAID_CLASS_COLORS[englishClass]
+
+        if not frame.colorOverride then
+            frame.colorOverride = {
+                ["color"] = {},
+                ["previousColor"] = {},
+            };
+        end
+
+        frame.colorOverride.color.r = classColor.r
+        frame.colorOverride.color.g = classColor.g
+        frame.colorOverride.color.b = classColor.b
+        frame.colorOverride.previousColor.r = 0.0
+        frame.colorOverride.previousColor.g = 0.0
+        frame.colorOverride.previousColor.b = 0.0
+
+        updateHealthBarColor(frame, true)
+
+    elseif UnitCanAttack("player", frame.unit) and (UnitAffectingCombat(frame.unit) or UnitReaction(frame.unit, "player") < 4)
         and not UnitIsPlayer(frame.unit) and not CompactUnitFrame_IsTapDenied(frame) then
         --[[Custom threat situation nameplate coloring:
            -1 = no threat data (monster not in combat).
@@ -164,25 +195,12 @@ local function updateThreatColor(frame)
             frame.colorOverride.color.r = r
             frame.colorOverride.color.g = g
             frame.colorOverride.color.b = b
+            frame.colorOverride.previousColor.r = 0.0
+            frame.colorOverride.previousColor.g = 0.0
+            frame.colorOverride.previousColor.b = 0.0
 
             updateHealthBarColor(frame, true)
         end
-    elseif UnitIsPlayer(frame.unit) then
-        local localizedClass, englishClass = UnitClass(frame.unit)
-        local classColor = RAID_CLASS_COLORS[englishClass]
-
-        if not frame.colorOverride then
-            frame.colorOverride = {
-                ["color"] = {},
-                ["previousColor"] = {},
-            };
-        end
-
-        frame.colorOverride.color.r = classColor.r
-        frame.colorOverride.color.g = classColor.g
-        frame.colorOverride.color.b = classColor.b
-
-        updateHealthBarColor(frame, true)
     else
         resetFrame(frame)
     end
@@ -200,8 +218,11 @@ myFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 myFrame:SetScript("OnEvent", function(self, event, arg1)
     if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "PLAYER_REGEN_ENABLED" then
         local callback = function()
-            for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
-                updateThreatColor(nameplate.UnitFrame)
+            for _, namePlate in pairs(C_NamePlate.GetNamePlates(issecure())) do
+                local namePlateTargetFrame = namePlate.UnitFrame
+                if (namePlateTargetFrame) then
+                    updateThreatColor(namePlateTargetFrame)
+                end
             end
         end
          -- to ensure colors update when mob is back at their spawn
@@ -212,17 +233,23 @@ myFrame:SetScript("OnEvent", function(self, event, arg1)
         end
     elseif event == "NAME_PLATE_UNIT_ADDED" then
         local callback = function()
-            local nameplate = C_NamePlate.GetNamePlateForUnit(arg1)
-            if nameplate then
-                updateThreatColor(nameplate.UnitFrame)
+            local namePlate = C_NamePlate.GetNamePlateForUnit(arg1, issecure())
+            if (namePlate) then
+                local namePlateTargetFrame = namePlate.UnitFrame
+                if (namePlateTargetFrame) then
+                    updateThreatColor(namePlateTargetFrame)
+                end
             end
         end
         callback()
         C_Timer.NewTimer(0.3, callback)
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
-        local nameplate = C_NamePlate.GetNamePlateForUnit(arg1)
-        if nameplate then
-            resetFrame(nameplate.UnitFrame)
+        local namePlate = C_NamePlate.GetNamePlateForUnit(arg1, issecure())
+        if (namePlate) then
+            local namePlateTargetFrame = namePlate.UnitFrame
+            if (namePlateTargetFrame) then
+                updateThreatColor(namePlateTargetFrame)
+            end
         end
     elseif event == "PLAYER_ROLES_ASSIGNED" or event == "RAID_ROSTER_UPDATE" or
            event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_ENTERING_WORLD" then
