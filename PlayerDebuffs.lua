@@ -130,7 +130,7 @@ function NameplatePlayerDebuffContainerMixin:createPetHealthBar()
     bar:EnableMouse(false);
     bar.unit = "pet";
 
-    bar.border = CreateFrame("Frame", nil, bar);
+    bar.border = CreateFrame("Frame", nil, bar, "BackdropTemplate");
     bar.border:SetPoint("TOPLEFT", bar, "TOPLEFT", -1, 1);
     bar.border:SetSize(bar:GetWidth(), bar:GetHeight() + 2);
     bar.border:SetBackdrop({
@@ -152,7 +152,6 @@ function NameplatePlayerDebuffContainerMixin:createPetHealthBar()
 
     bar:RegisterUnitEvent('UNIT_MAXHEALTH', bar.unit);
     bar:RegisterUnitEvent('UNIT_HEALTH', bar.unit);
-    bar:RegisterUnitEvent('UNIT_HEALTH_FREQUENT', bar.unit);
     bar:RegisterEvent('UNIT_PET');
     bar:RegisterEvent('PLAYER_ENTERING_WORLD');
 

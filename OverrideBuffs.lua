@@ -191,7 +191,7 @@ function UpdateEnemyBuffs(nameplate, unit)
             buff:SetID(i);
             buff.Icon:SetTexture(texture);
             if (not buff.border) then
-                buff.border = CreateFrame("Frame", nil, buff);
+                buff.border = CreateFrame("Frame", nil, buff, "BackdropTemplate");
                 buff.border:SetAllPoints(buff);
                 buff.border:SetBackdrop({
                     edgeFile = [[Interface/Buttons/WHITE8X8]], 
