@@ -1,4 +1,4 @@
-## Interface: 90000
+## Interface: 90001
 ## Title: BetterNameplates
 ## Notes: Tweaks to blizzard nameplates
 ## Author: Banksy
