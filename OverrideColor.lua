@@ -1,3 +1,11 @@
+local function resetHealthBarColor(frame)
+    frame.healthBar:SetStatusBarColor(frame.healthBar.r, frame.healthBar.g, frame.healthBar.b)
+
+    if frame.colorOverride then
+        frame.colorOverride = nil
+    end
+end
+
 local function updateHealthBarColor(frame, ...)
     if frame.colorOverride then
         local forceUpdate = ...
@@ -20,6 +28,8 @@ local function updateHealthBarColor(frame, ...)
             frame.colorOverride.previousColor.g = g
             frame.colorOverride.previousColor.b = b
         end
+    else
+        resetHealthBarColor(frame)
     end
 end
 
@@ -28,13 +38,6 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", updateHealthBarColor)
 local playerRole = 0
 local offTanks = {}
 local nonTanks = {}
-
-local function resetFrame(frame)
-    if frame and frame.colorOverride then
-        frame.colorOverride = nil
-        frame.healthBar:SetStatusBarColor(frame.healthBar.r, frame.healthBar.g, frame.healthBar.b)
-    end
-end
 
 local function getGroupRoles()
     local collectedTanks = {}
@@ -143,8 +146,10 @@ local function updateThreatColor(frame)
 
         updateHealthBarColor(frame, true)
 
-    elseif UnitCanAttack("player", frame.unit) and (UnitAffectingCombat(frame.unit) or UnitReaction(frame.unit, "player") < 4)
-        and not UnitIsPlayer(frame.unit) and not CompactUnitFrame_IsTapDenied(frame) then
+    elseif GetNumGroupMembers() > 1
+        and UnitCanAttack("player", frame.unit)
+        and not CompactUnitFrame_IsTapDenied(frame)
+        and (UnitAffectingCombat(frame.unit) or UnitReaction(frame.unit, "player") < 4) then
         --[[Custom threat situation nameplate coloring:
            -1 = no threat data (monster not in combat).
             0 = a non tank is tanking by threat.
@@ -174,7 +179,7 @@ local function updateThreatColor(frame)
                 elseif status >= 0 then         -- others tanking by threat
                     r, g, b = 1.00, 0.30, 0.00  -- orange  taunt?
                 end
-            elseif next(nonTanks) then
+            else
                 if status >= 4 then             -- tanks tanking by threat or by force
                     r, g, b = 0.00, 0.50, 0.01  -- green   no problem
                 elseif status >= 2 then         -- player tanking by force
@@ -202,7 +207,7 @@ local function updateThreatColor(frame)
             updateHealthBarColor(frame, true)
         end
     else
-        resetFrame(frame)
+        resetHealthBarColor(frame)
     end
 end
 
