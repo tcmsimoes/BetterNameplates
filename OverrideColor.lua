@@ -212,8 +212,8 @@ local function updateThreatColor(frame)
 end
 
 local myFrame = CreateFrame("frame")
-myFrame:RegisterEvent("PLAYER_REGEN_ENABLED");
 myFrame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE");
+myFrame:RegisterEvent("PLAYER_REGEN_ENABLED");
 myFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED");
 myFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED");
 myFrame:RegisterEvent("PLAYER_ROLES_ASSIGNED");
@@ -221,44 +221,35 @@ myFrame:RegisterEvent("RAID_ROSTER_UPDATE");
 myFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
 myFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 myFrame:SetScript("OnEvent", function(self, event, arg1)
-    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "PLAYER_REGEN_ENABLED" then
+    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "PLAYER_REGEN_ENABLED" or
+       event == "NAME_PLATE_UNIT_ADDED" then
         local callback = function()
             for _, namePlate in pairs(C_NamePlate.GetNamePlates(issecure())) do
-                local namePlateTargetFrame = namePlate.UnitFrame
-                if (namePlateTargetFrame) then
-                    updateThreatColor(namePlateTargetFrame)
+                if namePlate.UnitFrame then
+                    updateThreatColor(namePlate.UnitFrame)
                 end
             end
         end
          -- to ensure colors update when mob is back at their spawn
-        if event ~= "PLAYER_REGEN_ENABLED" then
-            callback()
-        else
+        if event == "PLAYER_REGEN_ENABLED" then
             C_Timer.NewTimer(5.0, callback)
+        else
+            callback()
         end
-    elseif event == "NAME_PLATE_UNIT_ADDED" then
-        local callback = function()
-            local namePlate = C_NamePlate.GetNamePlateForUnit(arg1, issecure())
-            if (namePlate) then
-                local namePlateTargetFrame = namePlate.UnitFrame
-                if (namePlateTargetFrame) then
-                    updateThreatColor(namePlateTargetFrame)
-                end
-            end
-        end
-        callback()
-        C_Timer.NewTimer(0.3, callback)
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
         local namePlate = C_NamePlate.GetNamePlateForUnit(arg1, issecure())
-        if (namePlate) then
-            local namePlateTargetFrame = namePlate.UnitFrame
-            if (namePlateTargetFrame) then
-                updateThreatColor(namePlateTargetFrame)
-            end
+        if namePlate and namePlate.UnitFrame then
+            resetHealthBarColor(namePlate.UnitFrame)
         end
     elseif event == "PLAYER_ROLES_ASSIGNED" or event == "RAID_ROSTER_UPDATE" or
            event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_ENTERING_WORLD" then
         offTanks, nonTanks = getGroupRoles()
         playerRole = GetSpecializationRole(GetSpecialization())
+
+        for _, namePlate in pairs(C_NamePlate.GetNamePlates(issecure())) do
+            if namePlate.UnitFrame then
+                resetHealthBarColor(namePlate.UnitFrame)
+            end
+        end
     end
 end);
