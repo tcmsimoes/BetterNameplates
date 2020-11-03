@@ -2,13 +2,13 @@
 ## Title: BetterNameplates
 ## Notes: Tweaks to blizzard nameplates
 ## Author: Banksy
-## Version: 1.0
 ## LoadOnDemand: 0
 ## LoadWith: Blizzard_NamePlates
 
 OverrideBuffs.lua
 OverrideColor.lua
-OverrideSize.lua
+OverrideTargetPlate.lua
+OverridePlayerPlate.lua
 DecoratePlayerFrame.lua
 
 PlayerDebuffs.xml

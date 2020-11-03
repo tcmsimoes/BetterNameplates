@@ -9,17 +9,9 @@ end
 local function updateHealthBarColor(frame, ...)
     if frame.colorOverride then
         local forceUpdate = ...
-        local r = frame.healthBar.r
-        local g = frame.healthBar.g
-        local b = frame.healthBar.b
-
-        if forceUpdate 
-          or (frame.healthBar.r == 1.0 and frame.healthBar.g == 0.0 and frame.healthBar.b == 0.0) 
-          or (frame.healthBar.r == 0.0 and frame.healthBar.g == 1.0 and frame.healthBar.b == 0.0) then
-            r = frame.colorOverride.color.r
-            g = frame.colorOverride.color.g
-            b = frame.colorOverride.color.b
-        end
+        local r = frame.colorOverride.color.r
+        local g = frame.colorOverride.color.g
+        local b = frame.colorOverride.color.b
 
         if frame.colorOverride.previousColor.r ~= r or frame.colorOverride.previousColor.g ~= g or frame.colorOverride.previousColor.b ~= b then
             frame.healthBar:SetStatusBarColor(r, g, b)
@@ -126,27 +118,7 @@ local function threatSituation(monster)
 end
 
 local function updateThreatColor(frame)
-    if UnitIsPlayer(frame.unit) then
-        local localizedClass, englishClass = UnitClass(frame.unit)
-        local classColor = RAID_CLASS_COLORS[englishClass]
-
-        if not frame.colorOverride then
-            frame.colorOverride = {
-                ["color"] = {},
-                ["previousColor"] = {},
-            };
-        end
-
-        frame.colorOverride.color.r = classColor.r
-        frame.colorOverride.color.g = classColor.g
-        frame.colorOverride.color.b = classColor.b
-        frame.colorOverride.previousColor.r = 0.0
-        frame.colorOverride.previousColor.g = 0.0
-        frame.colorOverride.previousColor.b = 0.0
-
-        updateHealthBarColor(frame, true)
-
-    elseif GetNumGroupMembers() > 1
+    if GetNumGroupMembers() > 1
         and UnitCanAttack("player", frame.unit)
         and not CompactUnitFrame_IsTapDenied(frame)
         and (UnitAffectingCombat(frame.unit) or UnitReaction(frame.unit, "player") < 4) then
@@ -163,19 +135,19 @@ local function updateThreatColor(frame)
 
         -- only recalculate color when situation was actually changed with gradient toward sibling color
         if not frame.colorOverride or frame.colorOverride.lastStatus ~= status then
-            local r, g, b = 1.0, 0.0, 0.0       -- red outside combat
+            local r, g, b = 0.0, 0.0, 0.0       -- white should never be seen
 
             if playerRole == "TANK" then
                 if status >= 5 then             -- another tank tanking by threat
                     r, g, b = 0.20, 0.50, 0.90  -- blue    no problem
                 elseif status >= 4 then         -- another tank tanking by force
-                    r, g, b = 1.00, 1.00, 0.47  -- yellow  another tank stealing aggro
+                    r, g, b = 1.00, 1.00, 0.47  -- yellow  taunt now!
                 elseif status >= 3 then         -- player tanking by threat
                     r, g, b = 0.00, 0.50, 0.01  -- green   no problem
                 elseif status >= 2 then         -- player tanking by force
-                    r, g, b = 1.00, 0.60, 0.00  -- orange  player stealing aggro
+                    r, g, b = 1.00, 0.60, 0.00  -- orange  drop aggro!
                 elseif status >= 1 then         -- others tanking by force
-                    r, g, b = 1.00, 0.00, 0.00  -- red     taunt now
+                    r, g, b = 1.00, 0.00, 0.00  -- red     taunt now!
                 elseif status >= 0 then         -- others tanking by threat
                     r, g, b = 1.00, 0.30, 0.00  -- orange  taunt?
                 end
@@ -183,7 +155,7 @@ local function updateThreatColor(frame)
                 if status >= 4 then             -- tanks tanking by threat or by force
                     r, g, b = 0.00, 0.50, 0.01  -- green   no problem
                 elseif status >= 2 then         -- player tanking by force
-                    r, g, b = 1.00, 0.30, 0.00  -- orange  player stealing aggro
+                    r, g, b = 1.00, 0.30, 0.00  -- orange  drop aggro!
                 elseif status >= 0 then         -- others tanking by threat or by force
                     r, g, b = 1.00, 1.00, 0.47  -- yellow  no problem?
                 end
@@ -220,12 +192,11 @@ myFrame:RegisterEvent("PLAYER_ROLES_ASSIGNED");
 myFrame:RegisterEvent("RAID_ROSTER_UPDATE");
 myFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
 myFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
-myFrame:SetScript("OnEvent", function(self, event, arg1)
-    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "PLAYER_REGEN_ENABLED" or
-       event == "NAME_PLATE_UNIT_ADDED" then
+myFrame:SetScript("OnEvent", function(self, event, unit)
+    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "PLAYER_REGEN_ENABLED" then
         local callback = function()
             for _, namePlate in pairs(C_NamePlate.GetNamePlates(issecure())) do
-                if namePlate.UnitFrame then
+                if namePlate.UnitFrame and not UnitIsPlayer(namePlate.UnitFrame.unit) then
                     updateThreatColor(namePlate.UnitFrame)
                 end
             end
@@ -236,8 +207,13 @@ myFrame:SetScript("OnEvent", function(self, event, arg1)
         else
             callback()
         end
-    elseif event == "NAME_PLATE_UNIT_REMOVED" then
-        local namePlate = C_NamePlate.GetNamePlateForUnit(arg1, issecure())
+    elseif event == "NAME_PLATE_UNIT_ADDED" and not UnitIsPlayer(unit) then
+        local namePlate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
+        if namePlate and namePlate.UnitFrame then
+            updateThreatColor(namePlate.UnitFrame)
+        end
+    elseif event == "NAME_PLATE_UNIT_REMOVED" and not UnitIsPlayer(unit) then
+        local namePlate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
         if namePlate and namePlate.UnitFrame then
             resetHealthBarColor(namePlate.UnitFrame)
         end
@@ -247,7 +223,7 @@ myFrame:SetScript("OnEvent", function(self, event, arg1)
         playerRole = GetSpecializationRole(GetSpecialization())
 
         for _, namePlate in pairs(C_NamePlate.GetNamePlates(issecure())) do
-            if namePlate.UnitFrame then
+            if namePlate.UnitFrame and not UnitIsPlayer(namePlate.UnitFrame.unit) then
                 resetHealthBarColor(namePlate.UnitFrame)
             end
         end
