@@ -118,8 +118,9 @@ local function threatSituation(monster)
 end
 
 local function updateThreatColor(frame)
-    if GetNumGroupMembers() > 1
-        and UnitCanAttack("player", frame.unit)
+    --if GetNumGroupMembers() > 1
+     --   and UnitCanAttack("player", frame.unit)
+    if UnitCanAttack("player", frame.unit)
         and not CompactUnitFrame_IsTapDenied(frame)
         and (UnitAffectingCombat(frame.unit) or UnitReaction(frame.unit, "player") < 4) then
         --[[Custom threat situation nameplate coloring:
@@ -193,26 +194,26 @@ myFrame:RegisterEvent("RAID_ROSTER_UPDATE");
 myFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
 myFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 myFrame:SetScript("OnEvent", function(self, event, unit)
-    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "PLAYER_REGEN_ENABLED" then
-        local callback = function()
-            for _, namePlate in pairs(C_NamePlate.GetNamePlates(issecure())) do
-                if namePlate.UnitFrame and not UnitIsPlayer(namePlate.UnitFrame.unit) then
-                    updateThreatColor(namePlate.UnitFrame)
-                end
+    local updateAllNamePlates = function()
+        for _, namePlate in pairs(C_NamePlate.GetNamePlates(issecure())) do
+            if namePlate.UnitFrame and not UnitIsUnit(namePlate.UnitFrame.unit, "player") then
+                updateThreatColor(namePlate.UnitFrame)
             end
         end
+    end
+    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "PLAYER_REGEN_ENABLED" then
          -- to ensure colors update when mob is back at their spawn
         if event == "PLAYER_REGEN_ENABLED" then
-            C_Timer.NewTimer(5.0, callback)
+            C_Timer.NewTimer(5.0, updateAllNamePlates)
         else
-            callback()
+            updateAllNamePlates()
         end
-    elseif event == "NAME_PLATE_UNIT_ADDED" and not UnitIsPlayer(unit) then
+    elseif event == "NAME_PLATE_UNIT_ADDED" and not UnitIsUnit(unit, "player") then
         local namePlate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
         if namePlate and namePlate.UnitFrame then
             updateThreatColor(namePlate.UnitFrame)
         end
-    elseif event == "NAME_PLATE_UNIT_REMOVED" and not UnitIsPlayer(unit) then
+    elseif event == "NAME_PLATE_UNIT_REMOVED" and not UnitIsUnit(unit, "player") then
         local namePlate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
         if namePlate and namePlate.UnitFrame then
             resetHealthBarColor(namePlate.UnitFrame)
@@ -222,10 +223,6 @@ myFrame:SetScript("OnEvent", function(self, event, unit)
         offTanks, nonTanks = getGroupRoles()
         playerRole = GetSpecializationRole(GetSpecialization())
 
-        for _, namePlate in pairs(C_NamePlate.GetNamePlates(issecure())) do
-            if namePlate.UnitFrame and not UnitIsPlayer(namePlate.UnitFrame.unit) then
-                resetHealthBarColor(namePlate.UnitFrame)
-            end
-        end
+        updateAllNamePlates()
     end
 end);

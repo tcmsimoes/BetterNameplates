@@ -6,7 +6,7 @@ hooksecurefunc(NamePlateDriverFrame, "SetupClassNameplateBars", function()
 end);
 
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
-    if UnitIsPlayer(frame.unit) then
+    if UnitIsUnit(frame.unit, "player") then
         local localizedClass, englishClass = UnitClass(frame.unit);
         local classColor = RAID_CLASS_COLORS[englishClass];
         if classColor then
