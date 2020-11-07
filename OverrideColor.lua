@@ -34,9 +34,10 @@ local nonTanks = {}
 local function getGroupRoles()
     local collectedTanks = {}
     local collectedOther = {}
-    local unitPrefix, unit, i, unitRole
+    local collectedPlayer, unitPrefix, unit, i, unitRole
     local isInRaid = IsInRaid()
 
+    collectedPlayer = GetSpecializationRole(GetSpecialization())
     if isInRaid then
         unitPrefix = "raid"
     else
@@ -61,10 +62,11 @@ local function getGroupRoles()
         end
     end
 
-    return collectedTanks, collectedOther
+    return collectedTanks, collectedOther, collectedPlayer
 end
 
 local function threatSituation(monster)
+    local targetStatus = -1
     local threatStatus = -1
     local tankValue    =  0
     local offTankValue =  0
@@ -75,40 +77,80 @@ local function threatSituation(monster)
     -- store if an offtank is tanking, or store their threat value if higher than others
     for _, unit in ipairs(offTanks) do
         isTanking, status, _, _, threatValue = UnitDetailedThreatSituation(unit, monster)
-        if isTanking then
-            threatStatus = status + 2
-            tankValue = threatValue
-        elseif status and threatValue > offTankValue then
-            offTankValue = threatValue
-        elseif UnitIsUnit(unit, monster .. "target") then
-            threatStatus = 5 -- ensure threat status if monster is targeting a tank
+        if status then
+            if isTanking then
+                threatStatus = status + 2
+                tankValue = threatValue
+            elseif threatValue > offTankValue then
+                offTankValue = threatValue
+            end
+        end
+        if UnitIsUnit(unit, monster .. "target") then
+            targetStatus = 5
         end
     end
-
     -- store if the player is tanking, or store their threat value if higher than others
     isTanking, status, _, _, threatValue = UnitDetailedThreatSituation("player", monster)
-    if isTanking then
-        threatStatus = status
-        tankValue = threatValue
-    elseif status then
-        playerValue = threatValue
+    if status then
+        if isTanking then
+            threatStatus = status
+            tankValue = threatValue
+        else
+            playerValue = threatValue
+        end
     end
-
+    if UnitIsUnit("player", monster .. "target") then
+        targetStatus = 3
+    end
     -- store if a non-tank is tanking, or store their threat value if higher than others
     for _, unit in ipairs(nonTanks) do
         isTanking, status, _, _, threatValue = UnitDetailedThreatSituation(unit, monster)
-        if isTanking then
-            threatStatus = 3 - status
-            tankValue = threatValue
-        elseif status and threatValue > nonTankValue then
-            nonTankValue = threatValue
+        if status then
+            if isTanking then
+                threatStatus = 3 - status
+                tankValue = threatValue
+            elseif threatValue > nonTankValue then
+                nonTankValue = threatValue
+            end
+        end
+        if UnitIsUnit(unit, monster .. "target") then
+            targetStatus = 0
         end
     end
-
-    -- ensure threat status if monster is targeting a friend
-    if threatStatus < 0 and UnitIsFriend("player", monster .. "target") then
-        threatStatus = 0
-        tankValue    = 0
+    -- default to offtank low threat on a nongroup target if none of the above were a match
+    if targetStatus < 0 and UnitExists(monster .. "target") then
+        unit = monster .. "target"
+        isTanking, status, _, _, threatValue = UnitDetailedThreatSituation(unit, monster)
+        if playerRole == "TANK" then
+            if status then
+                if isTanking then
+                    threatStatus = status + 2
+                    tankValue = threatValue
+                elseif threatValue > offTankValue then
+                    offTankValue = threatValue
+                end
+            end
+            if not UnitIsFriend(monster, unit) then
+                targetStatus = 5
+            end
+        else
+            if status then
+                if isTanking then
+                    threatStatus = 3 - status
+                    tankValue = threatValue
+                elseif threatValue > nonTankValue then
+                    nonTankValue = threatValue
+                end
+            end
+            if not UnitIsFriend(monster, unit) then
+                targetStatus = 0
+            end
+        end
+    end
+    -- clear threat values if tank was found through monster target instead of threat
+    if targetStatus > -1 and (UnitIsPlayer(monster) or threatStatus < 0) then
+        threatStatus = targetStatus
+        tankValue = 0
         offTankValue = 0
         playerValue  = 0
         nonTankValue = 0
@@ -123,14 +165,14 @@ local function updateThreatColor(frame)
         and not CompactUnitFrame_IsTapDenied(frame)
         and (UnitAffectingCombat(frame.unit) or UnitReaction(frame.unit, "player") < 4) then
         --[[Custom threat situation nameplate coloring:
-           -1 = no threat data (monster not in combat).
+            -1 = no threat data (monster not in combat).
             0 = a non tank is tanking by threat.
             1 = a non tank is tanking by force.
             2 = player tanking monster by force.
             3 = player tanking monster by threat.
-           +4 = another tank is tanking by force.
-           +5 = another tank is tanking by threat.
-        ]]--
+            +4 = another tank is tanking by force.
+            +5 = another tank is tanking by threat.
+        ]]-- situation 0 to 3 flipped later as nontank.
         local status, tank, offtank, player, nontank = threatSituation(frame.unit)
 
         -- only recalculate color when situation was actually changed with gradient toward sibling color
@@ -155,7 +197,7 @@ local function updateThreatColor(frame)
                 if status >= 4 then             -- tanks tanking by threat or by force
                     r, g, b = 0.00, 0.50, 0.01  -- green   no problem
                 elseif status >= 2 then         -- player tanking by force
-                    r, g, b = 1.00, 0.30, 0.00  -- orange  drop aggro!
+                    r, g, b = 1.00, 0.00, 0.00  -- red     drop aggro!
                 elseif status >= 0 then         -- others tanking by threat or by force
                     r, g, b = 1.00, 1.00, 0.47  -- yellow  no problem?
                 end
@@ -219,8 +261,7 @@ myFrame:SetScript("OnEvent", function(self, event, unit)
         end
     elseif event == "PLAYER_ROLES_ASSIGNED" or event == "RAID_ROSTER_UPDATE" or
            event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_ENTERING_WORLD" then
-        offTanks, nonTanks = getGroupRoles()
-        playerRole = GetSpecializationRole(GetSpecialization())
+        offTanks, nonTanks, playerRole = getGroupRoles()
 
         updateAllNamePlates()
     end
