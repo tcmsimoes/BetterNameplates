@@ -1,14 +1,13 @@
 local function resetHealthBarColor(frame)
-    frame.healthBar:SetStatusBarColor(frame.healthBar.r, frame.healthBar.g, frame.healthBar.b)
-
     if frame.colorOverride then
         frame.colorOverride = nil
     end
+
+    CompactUnitFrame_UpdateHealthColor(frame)
 end
 
-local function updateHealthBarColor(frame, ...)
+local function updateHealthBarColor(frame)
     if frame.colorOverride then
-        local forceUpdate = ...
         local r = frame.colorOverride.color.r
         local g = frame.colorOverride.color.g
         local b = frame.colorOverride.color.b
@@ -20,12 +19,12 @@ local function updateHealthBarColor(frame, ...)
             frame.colorOverride.previousColor.g = g
             frame.colorOverride.previousColor.b = b
         end
-    else
-        resetHealthBarColor(frame)
     end
 end
 
+-- UpdateHealthBorder resets color if not handled as well
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", updateHealthBarColor)
+hooksecurefunc("CompactUnitFrame_UpdateHealthBorder", updateHealthBarColor)
 
 local playerRole = 0
 local offTanks = {}
@@ -46,7 +45,7 @@ local function getGroupRoles()
 
     for i = 1, GetNumGroupMembers() do
         unit = unitPrefix .. i
-        if not UnitIsUnit(unit, "player") then
+        if not UnitIsUnit(unit, "player") and not UnitIsUnit(unit, "pet") then
             unitRole = UnitGroupRolesAssigned(unit)
             if isInRaid and unitRole ~= "TANK" then
                 _, _, _, _, _, _, _, _, _, unitRole = GetRaidRosterInfo(i)
@@ -76,7 +75,7 @@ local function threatSituation(monster)
 
     -- store if an offtank is tanking, or store their threat value if higher than others
     for _, unit in ipairs(offTanks) do
-        isTanking, status, _, _, threatValue = UnitDetailedThreatSituation(unit, monster)
+        local isTanking, status, _, _, threatValue = UnitDetailedThreatSituation(unit, monster)
         if status then
             if isTanking then
                 threatStatus = status + 2
@@ -90,7 +89,7 @@ local function threatSituation(monster)
         end
     end
     -- store if the player is tanking, or store their threat value if higher than others
-    isTanking, status, _, _, threatValue = UnitDetailedThreatSituation("player", monster)
+    local isTanking, status, _, _, threatValue = UnitDetailedThreatSituation("player", monster)
     if status then
         if isTanking then
             threatStatus = status
@@ -104,7 +103,7 @@ local function threatSituation(monster)
     end
     -- store if a non-tank is tanking, or store their threat value if higher than others
     for _, unit in ipairs(nonTanks) do
-        isTanking, status, _, _, threatValue = UnitDetailedThreatSituation(unit, monster)
+        local isTanking, status, _, _, threatValue = UnitDetailedThreatSituation(unit, monster)
         if status then
             if isTanking then
                 threatStatus = 3 - status
@@ -120,7 +119,7 @@ local function threatSituation(monster)
     -- default to offtank low threat on a nongroup target if none of the above were a match
     if targetStatus < 0 and UnitExists(monster .. "target") then
         unit = monster .. "target"
-        isTanking, status, _, _, threatValue = UnitDetailedThreatSituation(unit, monster)
+        local isTanking, status, _, _, threatValue = UnitDetailedThreatSituation(unit, monster)
         if playerRole == "TANK" then
             if status then
                 if isTanking then
@@ -150,13 +149,13 @@ local function threatSituation(monster)
     -- clear threat values if tank was found through monster target instead of threat
     if targetStatus > -1 and (UnitIsPlayer(monster) or threatStatus < 0) then
         threatStatus = targetStatus
-        tankValue = 0
-        offTankValue = 0
-        playerValue  = 0
-        nonTankValue = 0
+    end
+    -- player status is always -1 if not in combat
+    if not UnitAffectingCombat("player") then
+        playerValue = -1
     end
 
-    return threatStatus, tankValue, offTankValue, playerValue, nonTankValue
+    return threatStatus
 end
 
 local function updateThreatColor(frame)
@@ -172,12 +171,12 @@ local function updateThreatColor(frame)
             3 = player tanking monster by threat.
             +4 = another tank is tanking by force.
             +5 = another tank is tanking by threat.
-        ]]-- situation 0 to 3 flipped later as nontank.
-        local status, tank, offtank, player, nontank = threatSituation(frame.unit)
+        ]]
+        local status = threatSituation(frame.unit)
 
         -- only recalculate color when situation was actually changed with gradient toward sibling color
         if not frame.colorOverride or frame.colorOverride.lastStatus ~= status then
-            local r, g, b = 0.0, 0.0, 0.0       -- white should never be seen
+            local r, g, b = 0.0, 0.0, 0.0
 
             if playerRole == "TANK" then
                 if status >= 5 then             -- another tank tanking by threat
@@ -218,7 +217,7 @@ local function updateThreatColor(frame)
             frame.colorOverride.previousColor.g = 0.0
             frame.colorOverride.previousColor.b = 0.0
 
-            updateHealthBarColor(frame, true)
+            updateHealthBarColor(frame)
         end
     else
         resetHealthBarColor(frame)
@@ -227,6 +226,7 @@ end
 
 local myFrame = CreateFrame("frame")
 myFrame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE");
+myFrame:RegisterEvent("UNIT_THREAT_LIST_UPDATE"); 
 myFrame:RegisterEvent("PLAYER_REGEN_ENABLED");
 myFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED");
 myFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED");
@@ -242,13 +242,13 @@ myFrame:SetScript("OnEvent", function(self, event, unit)
             end
         end
     end
-    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "PLAYER_REGEN_ENABLED" then
+    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "UNIT_THREAT_LIST_UPDATE" or event == "PLAYER_REGEN_ENABLED" then
          -- to ensure colors update when mob is back at their spawn
         if event == "PLAYER_REGEN_ENABLED" then
-            C_Timer.NewTimer(5.0, updateAllNamePlates)
-        else
-            updateAllNamePlates()
+            C_Timer.After(5.0, updateAllNamePlates)
         end
+
+        updateAllNamePlates()
     elseif event == "NAME_PLATE_UNIT_ADDED" and not UnitIsUnit(unit, "player") then
         local namePlate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
         if namePlate and namePlate.UnitFrame then
