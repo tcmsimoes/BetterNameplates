@@ -8,7 +8,7 @@ end
 
 local function updateHealthBarColor(frame)
     if frame.colorOverride then
-        if UnitIsUnit(frame.unit, "player") then
+        if frame.unit ~= frame.colorOverride.unit then
             resetHealthBarColor(frame)
         else
             local r = frame.colorOverride.color.r
@@ -25,7 +25,7 @@ local function updateHealthBarColor(frame)
 end
 
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", updateHealthBarColor)
--- try to avoid misterious color reset
+-- try to avoid mysterious color reset
 hooksecurefunc("CompactUnitFrame_UpdateHealthBorder", updateHealthBarColor)
 hooksecurefunc("CompactUnitFrame_UpdateAggroFlash", updateHealthBarColor)
 
@@ -212,6 +212,7 @@ local function updateThreatColor(frame)
                 };
             end
 
+            frame.colorOverride.unit = frame.unit
             frame.colorOverride.lastStatus = status
             frame.colorOverride.color.r = r
             frame.colorOverride.color.g = g
