@@ -8,7 +8,7 @@ end
 
 local function updateHealthBarColor(frame)
     if frame.colorOverride then
-        if frame.unit ~= frame.colorOverride.unit then
+        if frame.unit ~= frame.colorOverride.unit or UnitIsUnit(frame.unit, "player") then
             resetHealthBarColor(frame)
         else
             local r = frame.colorOverride.color.r
