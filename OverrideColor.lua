@@ -8,6 +8,11 @@ end
 
 local function updateHealthBarColor(frame)
     if frame.colorOverride then
+        if UnitIsUnit(frame.unit, "player") then
+            resetHealthBarColor(frame)
+            return
+        end
+
         local r = frame.colorOverride.color.r
         local g = frame.colorOverride.color.g
         local b = frame.colorOverride.color.b
@@ -175,7 +180,7 @@ local function updateThreatColor(frame)
 
         -- only recalculate color when situation was actually changed with gradient toward sibling color
         if not frame.colorOverride or frame.colorOverride.lastStatus ~= status then
-            local r, g, b = 0.0, 0.0, 0.0
+            local r, g, b = 1.0, 0.0, 0.0 -- default to red
 
             if playerRole == "TANK" then
                 if status >= 5 then             -- another tank tanking by threat
