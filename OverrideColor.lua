@@ -10,18 +10,17 @@ local function updateHealthBarColor(frame)
     if frame.colorOverride then
         if UnitIsUnit(frame.unit, "player") then
             resetHealthBarColor(frame)
-            return
+        else
+            local r = frame.colorOverride.color.r
+            local g = frame.colorOverride.color.g
+            local b = frame.colorOverride.color.b
+
+            frame.healthBar:SetStatusBarColor(r, g, b)
+
+            frame.colorOverride.previousColor.r = r
+            frame.colorOverride.previousColor.g = g
+            frame.colorOverride.previousColor.b = b
         end
-
-        local r = frame.colorOverride.color.r
-        local g = frame.colorOverride.color.g
-        local b = frame.colorOverride.color.b
-
-        frame.healthBar:SetStatusBarColor(r, g, b)
-
-        frame.colorOverride.previousColor.r = r
-        frame.colorOverride.previousColor.g = g
-        frame.colorOverride.previousColor.b = b
     end
 end
 
