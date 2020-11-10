@@ -12,19 +12,18 @@ local function updateHealthBarColor(frame)
         local g = frame.colorOverride.color.g
         local b = frame.colorOverride.color.b
 
-        if frame.colorOverride.previousColor.r ~= r or frame.colorOverride.previousColor.g ~= g or frame.colorOverride.previousColor.b ~= b then
-            frame.healthBar:SetStatusBarColor(r, g, b)
+        frame.healthBar:SetStatusBarColor(r, g, b)
 
-            frame.colorOverride.previousColor.r = r
-            frame.colorOverride.previousColor.g = g
-            frame.colorOverride.previousColor.b = b
-        end
+        frame.colorOverride.previousColor.r = r
+        frame.colorOverride.previousColor.g = g
+        frame.colorOverride.previousColor.b = b
     end
 end
 
--- UpdateHealthBorder resets color if not handled as well
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", updateHealthBarColor)
+-- try to avoid misterious color reset
 hooksecurefunc("CompactUnitFrame_UpdateHealthBorder", updateHealthBarColor)
+hooksecurefunc("CompactUnitFrame_UpdateAggroFlash", updateHealthBarColor)
 
 local playerRole = 0
 local offTanks = {}
@@ -242,7 +241,8 @@ myFrame:SetScript("OnEvent", function(self, event, unit)
             end
         end
     end
-    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "UNIT_THREAT_LIST_UPDATE" or event == "PLAYER_REGEN_ENABLED" then
+    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "UNIT_THREAT_LIST_UPDATE" or
+       event == "PLAYER_REGEN_ENABLED" then
          -- to ensure colors update when mob is back at their spawn
         if event == "PLAYER_REGEN_ENABLED" then
             C_Timer.After(5.0, updateAllNamePlates)
