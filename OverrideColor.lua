@@ -163,6 +163,7 @@ end
 
 local function updateThreatColor(frame)
     if GetNumGroupMembers() > 1
+        and not UnitIsPlayer(frame.unit)
         and UnitCanAttack("player", frame.unit)
         and not CompactUnitFrame_IsTapDenied(frame)
         and (UnitAffectingCombat(frame.unit) or UnitReaction(frame.unit, "player") < 4) then
