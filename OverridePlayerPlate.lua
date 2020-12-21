@@ -1,8 +1,13 @@
-hooksecurefunc(NamePlateDriverFrame, "SetupClassNameplateBars", function()
-    local namePlatePlayer = C_NamePlate.GetNamePlateForUnit("player", issecure());
-    if namePlatePlayer then
-        namePlatePlayer.UnitFrame.healthBar:SetHeight(12);
-    end    
+hooksecurefunc("DefaultCompactNamePlateFrameAnchorInternal", function(frame, setupOptions)
+    if not customOptions or not customOptions.ignoreBarSize then
+        if setupOptions.healthBarAlpha == 1 then
+            PixelUtil.SetHeight(frame.healthBar, setupOptions.healthBarHeight + 12);
+        else
+            PixelUtil.SetHeight(frame.healthBar, setupOptions.healthBarHeight);
+        end
+
+        frame.healthBar.border:UpdateSizes();
+    end
 end);
 
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
@@ -20,8 +25,6 @@ hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
                 else
                     frame.selectionHighlight:SetVertexColor(1, 1, 1);
                 end
-        
-                frame.healthBar.r, frame.healthBar.g, frame.healthBar.b = r, g, b;
             end
         end
     end
