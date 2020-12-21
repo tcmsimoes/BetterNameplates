@@ -231,7 +231,7 @@ end
 
 local myFrame = CreateFrame("frame")
 myFrame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE");
-myFrame:RegisterEvent("UNIT_THREAT_LIST_UPDATE"); 
+myFrame:RegisterEvent("UNIT_THREAT_LIST_UPDATE");
 myFrame:RegisterEvent("PLAYER_REGEN_ENABLED");
 myFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED");
 myFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED");

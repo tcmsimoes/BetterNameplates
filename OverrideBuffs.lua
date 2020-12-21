@@ -23,6 +23,7 @@ local visibleSpells = {
     ["Anti-Magic Shell"] = true,
     ["Icebound Fortitude"] = true,
     ["Dark Succor"] = true,
+    ["Swarming Mist"] = true,
 ---- blood
     ["Bone Shield"] = true,
     ["Vampiric Blood"] = true,
