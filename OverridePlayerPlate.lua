@@ -1,7 +1,7 @@
 hooksecurefunc("DefaultCompactNamePlateFrameAnchorInternal", function(frame, setupOptions)
     if not customOptions or not customOptions.ignoreBarSize then
         if setupOptions.healthBarAlpha == 1 then
-            PixelUtil.SetHeight(frame.healthBar, setupOptions.healthBarHeight + 12);
+            PixelUtil.SetHeight(frame.healthBar, setupOptions.healthBarHeight + 10);
         else
             PixelUtil.SetHeight(frame.healthBar, setupOptions.healthBarHeight);
         end
