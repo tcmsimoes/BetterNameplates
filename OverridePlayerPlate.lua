@@ -1,5 +1,5 @@
 hooksecurefunc("DefaultCompactNamePlateFrameAnchorInternal", function(frame, setupOptions)
-    if not customOptions or not customOptions.ignoreBarSize then
+    if setupOptions and frame.healthBar and not customOptions or not customOptions.ignoreBarSize then
         if setupOptions.healthBarAlpha == 1 then
             PixelUtil.SetHeight(frame.healthBar, setupOptions.healthBarHeight + 10);
         else
@@ -11,7 +11,7 @@ hooksecurefunc("DefaultCompactNamePlateFrameAnchorInternal", function(frame, set
 end);
 
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", function(frame)
-    if UnitIsUnit(frame.unit, "player") then
+    if frame.unit and UnitIsUnit(frame.unit, "player") then
         local localizedClass, englishClass = UnitClass(frame.unit);
         local classColor = RAID_CLASS_COLORS[englishClass];
         if classColor then

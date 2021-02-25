@@ -5,7 +5,7 @@ myFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 local oldNamePlateTargetFrame = nil
 local oldNamePlateTargetScale = -1
 
-myFrame:SetScript("OnEvent", function(self, event, unit)
+myFrame:SetScript("OnEvent", function(self, event, ...)
     if not UnitIsUnit("player", "target") then
         local namePlate = C_NamePlate.GetNamePlateForUnit("target", issecure())
         if namePlate then
