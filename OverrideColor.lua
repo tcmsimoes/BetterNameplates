@@ -163,6 +163,7 @@ end
 
 local function updateThreatColor(frame)
     if GetNumGroupMembers() > 1
+        and frame.unit
         and not UnitIsPlayer(frame.unit)
         and UnitCanAttack("player", frame.unit)
         and not CompactUnitFrame_IsTapDenied(frame)
@@ -242,7 +243,7 @@ myFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 myFrame:SetScript("OnEvent", function(self, event, unit)
     local updateAllNamePlates = function()
         for _, namePlate in pairs(C_NamePlate.GetNamePlates(issecure())) do
-            if namePlate.UnitFrame and not UnitIsUnit(namePlate.UnitFrame.unit, "player") then
+            if namePlate.UnitFrame and namePlate.UnitFrame.unit and not UnitIsUnit(namePlate.UnitFrame.unit, "player") then
                 updateThreatColor(namePlate.UnitFrame)
             end
         end
