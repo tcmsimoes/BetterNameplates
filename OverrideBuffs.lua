@@ -230,12 +230,9 @@ local inBattleground = false;
 
 hooksecurefunc(_G.NamePlateDriverFrame, "OnUnitAuraUpdate", function(self, unit)
     local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure());
-    if (nameplate and UnitIsUnit(unit, "player")) then
+    if (nameplate and UnitIsUnit("player", unit)) then
         UpdatePlayerBuffs(nameplate, unit);
     elseif (nameplate and not inBattleground) then
         UpdateEnemyBuffs(nameplate, unit);
     end
 end);
-
-local myFrame = CreateFrame("Frame");
-myFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
