@@ -1,9 +1,8 @@
-## Interface: 90005
+## Interface: 90100
 ## Title: BetterNameplates
 ## Notes: Tweaks to blizzard nameplates
 ## Author: Banksy
-## LoadOnDemand: 0
-## LoadWith: Blizzard_NamePlates
+## Dependencies: Blizzard_NamePlates
 
 OverrideBuffs.lua
 OverrideColor.lua
