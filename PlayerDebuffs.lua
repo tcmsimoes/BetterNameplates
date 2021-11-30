@@ -34,6 +34,14 @@ function NameplatePlayerDebuffContainerMixin:Setup()
         end
 
         self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
+    elseif (class == "MAGE") then
+        local myspec = GetSpecialization();
+
+        if (myspec == 1) then
+            yOffset = -18;
+        end
+
+        self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
     end
 
     self:SetParent(ClassNameplateManaBarFrame);
