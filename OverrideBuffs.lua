@@ -1,4 +1,4 @@
-local visibleSpells = {
+local visibilePlayerBuffs = {
 -- other classes
 ---- defensive
     ["Guardian Spirit"] = true,
@@ -71,168 +71,185 @@ local visibleSpells = {
     ["Enhanced Pyrotechnics"] = true,
 };
 
-function UpdatePlayerBuffs(nameplate, unit)
-    local buffFrame = nameplate.UnitFrame.BuffFrame;
-
-    if (not buffFrame.isActive) then
-        return;
-    end
-
-    buffFrame.filter = "HELPFUL";
-
-    local PLAYER_BUFF_MAX_DISPLAY = 8;
-    local buffsPresentCount = 0;
-    local buffsPresent = {};
-    for i = 1, PLAYER_BUFF_MAX_DISPLAY do
-        local buff = buffFrame.buffList[i];
-        if (buff) then
-            if (buff.border) then
-                buff.border:Hide();
-            end
-            if (buff:IsShown()) then
-                buffsPresent[buff:GetID()] = true;
-                buffsPresentCount = buffsPresentCount + 1;
-            end
+function UpdateBuffs(buffFrame, activeBuffs, maxDisplayBuffs)
+    local buffIndex = 1;
+    for _, activeBuff in ipairs(activeBuffs) do
+        if (not buffFrame.buffList[buffIndex]) then
+            buffFrame.buffList[buffIndex] = CreateFrame("Frame", nil, buffFrame, "NameplateBuffButtonTemplate");
+            buffFrame.buffList[buffIndex]:SetMouseClickEnabled(false);
+            buffFrame.buffList[buffIndex].layoutIndex = buffIndex;
         end
-    end
-
-    local filteredSpells = {};
-    for i = 1, 40 do
-        local name, texture, count, _, duration, expirationTime, caster, _, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
-
-        if (not spellId) then
-            break;
+        local buff = buffFrame.buffList[buffIndex];
+        buff:SetID(activeBuff.index);
+        buff.name = activeBuff.name;
+        buff.filter = activeBuff.filter;
+        buff.Icon:SetTexture(activeBuff.icon);
+        if (activeBuff.count > 1) then
+            buff.CountFrame.Count:SetText(activeBuff.count);
+            buff.CountFrame.Count:Show();
+        else
+            buff.CountFrame.Count:Hide();
         end
-
-        if (visibleSpells[name] and not buffsPresent[i]) then
-            filteredSpells[i] = {["name"] = name,
-                                 ["texture"] = texture,
-                                 ["count"] = count,
-                                 ["duration"] = duration,
-                                 ["expirationTime"] = expirationTime,
-                                 ["caster"] = caster,
-                                 ["spellId"] = spellId};
+        if (not buff.border) then
+            buff.border = CreateFrame("Frame", nil, buff, "BackdropTemplate");
+            buff.border:SetAllPoints(buff);
+            buff.border:SetBackdrop({
+                edgeFile = [[Interface/Buttons/WHITE8X8]], 
+                edgeSize = 1, 
+            });
         end
-    end
-
-    local buffIndex = buffsPresentCount + 1;
-    for i, spell in pairs(filteredSpells) do
-        if (buffIndex > PLAYER_BUFF_MAX_DISPLAY) then
-            break;
-        end
-
-        if (spell.name) then
-            if (not buffFrame.buffList[buffIndex]) then
-                buffFrame.buffList[buffIndex] = CreateFrame("Frame", nil, buffFrame, "NameplateBuffButtonTemplate");
-                buffFrame.buffList[buffIndex]:SetMouseClickEnabled(false);
-                buffFrame.buffList[buffIndex].layoutIndex = buffIndex;
-            end
-            local buff = buffFrame.buffList[buffIndex];
-            buff:SetID(i);
-            buff.Icon:SetTexture(spell.texture);
-            if (spell.count > 1) then
-                buff.CountFrame.Count:SetText(spell.count);
-                buff.CountFrame.Count:Show();
-            else
-                buff.CountFrame.Count:Hide();
-            end
-
-            CooldownFrame_Set(buff.Cooldown, spell.expirationTime - spell.duration, spell.duration, spell.duration > 0, true);
-
-            buff:Show();
-            buffIndex = buffIndex + 1;
-        end
-    end
-
-    for i = buffIndex, PLAYER_BUFF_MAX_DISPLAY do
-        if (buffFrame.buffList[i]) then
-            buffFrame.buffList[i]:Hide();
-        end
-    end
-    buffFrame:Layout();
-end
-
-function UpdateEnemyBuffs(nameplate, unit)
-    local buffFrame = nameplate.UnitFrame.BuffFrame;
-
-    if (not buffFrame.isActive) then
-        return;
-    end
-
-    buffFrame.filter = "HELPFUL";
-
-    local ENEMY_BUFF_MAX_DISPLAY = 4;
-    local buffsPresentCount = 0;
-    local buffsPresent = {};
-    for i = 1, BUFF_MAX_DISPLAY do
-        local buff = buffFrame.buffList[i];
-        if (buff) then
-            if (buff.border) then
-                buff.border:Hide();
-            end
-            if (buff:IsShown()) then
-                buffsPresent[buff:GetID()] = true;
-                buffsPresentCount = buffsPresentCount + 1;
-            end
-        end
-    end
-
-    local buffIndex = buffsPresentCount + 1;
-    for i = 1, ENEMY_BUFF_MAX_DISPLAY do
-        local name, texture, count, _, duration, expirationTime, caster, isStealable, _, spellId, _, _, _, _ = UnitAura(unit, i, buffFrame.filter);
-
-        if (name) then
-            if (not buffFrame.buffList[buffIndex]) then
-                buffFrame.buffList[buffIndex] = CreateFrame("Frame", nil, buffFrame, "NameplateBuffButtonTemplate");
-                buffFrame.buffList[buffIndex]:SetMouseClickEnabled(false);
-                buffFrame.buffList[buffIndex].layoutIndex = buffIndex;
-            end
-            local buff = buffFrame.buffList[buffIndex];
-            buff:SetID(i);
-            buff.Icon:SetTexture(texture);
-            if (not buff.border) then
-                buff.border = CreateFrame("Frame", nil, buff, "BackdropTemplate");
-                buff.border:SetAllPoints(buff);
-                buff.border:SetBackdrop({
-                    edgeFile = [[Interface/Buttons/WHITE8X8]], 
-                    edgeSize = 1, 
-                });
-            end
-            buff.border:Show();
-            if (count > 1) then
-                buff.CountFrame.Count:SetText(count);
-                buff.CountFrame.Count:Show();
-            else
-                buff.CountFrame.Count:Hide();
-            end
-            if (isStealable) then
+        buff.border:Hide();
+        if (activeBuff.isBuff and not activeBuff.castByPlayer) then
+            if (activeBuff.isStealable) then
                 buff.border:SetBackdropBorderColor(0.0, 0.0, 1.0, 0.7);
-            else
+            elseif (not activeBuff.castByPlayer) then
                 buff.border:SetBackdropBorderColor(1.0, 0.0, 0.0, 0.7);
             end
 
-            CooldownFrame_Set(buff.Cooldown, expirationTime - duration, duration, duration > 0, true);
-
-            buff:Show();
-            buffIndex = buffIndex + 1;
+            buff.border:Show();
         end
+
+        CooldownFrame_Set(buff.Cooldown, activeBuff.expirationTime - activeBuff.duration, activeBuff.duration, activeBuff.duration > 0, true);
+
+        if (not buff.isTooltipOverrided) then
+            hooksecurefunc(buff, 'OnEnter', function(self, ...)
+                NamePlateTooltip:SetUnitAura(self:GetParent().unit, self:GetID(), self.filter);
+            end);
+
+            buff.isTooltipOverrided = true;
+        end
+
+        buff:Show();
+
+        buffIndex = buffIndex + 1;
     end
 
-    for i = buffIndex, ENEMY_BUFF_MAX_DISPLAY do
-        if (buffFrame.buffList[i]) then
-            buffFrame.buffList[i]:Hide();
+    for i = buffIndex, maxDisplayBuffs do
+        local buff = buffFrame.buffList[i];
+        if (buff) then
+            buff:Hide();
+            if (buff.border) then
+                buff.border:Hide();
+            end
+        else
+            break;
         end
     end
     buffFrame:Layout();
 end
 
-local inBattleground = false;
+function UpdatePlayerBuffs(buffFrame, unit, isFullUpdate, updatedAuraInfos)
+    if (not buffFrame:IsVisible() or not unit) then
+        return;
+    end
 
-hooksecurefunc(_G.NamePlateDriverFrame, "OnUnitAuraUpdate", function(self, unit)
+    buffFrame.isActive = false;
+    buffFrame.filter = "HELPFUL";
+
+    local activeBuffs = {};
+    local index = 1;
+    AuraUtil.ForEachAura(unit, buffFrame.filter, nil, function(...)
+        local name, icon, count, dispelType, duration, expirationTime, caster, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossAura, castByPlayer, nameplateShowAll = ...;
+
+        if (visibilePlayerBuffs[name] or buffFrame:ShouldShowBuff(name, caster, nameplateShowPersonal, nameplateShowAll)) then
+            table.insert(activeBuffs, {
+                ["spellId"] = spellId,
+                ["name"] = name,
+                ["icon"] = icon,
+                ["count"] = count,
+                ["dispelType"] = dispelType,
+                ["duration"] = duration,
+                ["expirationTime"] = expirationTime,
+                ["caster"] = caster,
+                ["isStealable"] = isStealable,
+                ["isBossAura"] = isBossAura,
+                ["castByPlayer"] = castByPlayer,
+                ["filter"] = buffFrame.filter,
+                ["isBuff"] = true,
+                ["index"] = index
+            });
+        end
+
+        index = index + 1;
+    end);
+
+    local PLAYER_BUFF_MAX_DISPLAY = 8;
+
+    UpdateBuffs(buffFrame, activeBuffs, PLAYER_BUFF_MAX_DISPLAY);
+end
+
+function UpdateEnemyBuffs(buffFrame, unit, isFullUpdate, updatedAuraInfos)
+    if (not buffFrame:IsVisible() or not unit) then
+        return;
+    end
+
+    buffFrame.isActive = false;
+    buffFrame.filter = "HELPFUL";
+
+    local activeBuffs = {};
+    local filter = "HARMFULL|INCLUDE_NAME_PLATE_ONLY";
+    local index = 1;
+    AuraUtil.ForEachAura(unit, filter, nil, function(...)
+        local name, icon, count, dispelType, duration, expirationTime, caster, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossAura, castByPlayer, nameplateShowAll = ...;
+
+        if (buffFrame:ShouldShowBuff(name, caster, nameplateShowPersonal, nameplateShowAll)) then
+            table.insert(activeBuffs, {
+                ["spellId"] = spellId,
+                ["name"] = name,
+                ["icon"] = icon,
+                ["count"] = count,
+                ["dispelType"] = dispelType,
+                ["duration"] = duration,
+                ["expirationTime"] = expirationTime,
+                ["caster"] = caster,
+                ["isStealable"] = isStealable,
+                ["isBossAura"] = isBossAura,
+                ["castByPlayer"] = castByPlayer,
+                ["filter"] = filter,
+                ["isBuff"] = false,
+                ["index"] = index
+            });
+        end
+
+        index = index + 1;
+    end);
+
+    filter = "HELPFUL";
+    index = 1;
+    AuraUtil.ForEachAura(unit, filter, nil, function(...)
+        local name, icon, count, dispelType, duration, expirationTime, caster, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossAura, castByPlayer, nameplateShowAll = ...;
+
+        table.insert(activeBuffs, {
+            ["spellId"] = spellId,
+            ["name"] = name,
+            ["icon"] = icon,
+            ["count"] = count,
+            ["dispelType"] = dispelType,
+            ["duration"] = duration,
+            ["expirationTime"] = expirationTime,
+            ["caster"] = caster,
+            ["isStealable"] = isStealable,
+            ["isBossAura"] = isBossAura,
+            ["castByPlayer"] = castByPlayer,
+            ["filter"] = filter,
+            ["isBuff"] = true,
+            ["index"] = index
+        });
+
+        index = index + 1;
+    end);
+
+    local ENEMY_BUFF_MAX_DISPLAY = 6;
+
+    UpdateBuffs(buffFrame, activeBuffs, ENEMY_BUFF_MAX_DISPLAY);
+end
+
+
+hooksecurefunc(_G.NamePlateDriverFrame, "OnUnitAuraUpdate", function(self, unit, ...)
     local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure());
     if (nameplate and UnitIsUnit("player", unit)) then
-        UpdatePlayerBuffs(nameplate, unit);
-    elseif (nameplate and not inBattleground) then
-        UpdateEnemyBuffs(nameplate, unit);
+        UpdatePlayerBuffs(nameplate.UnitFrame.BuffFrame, nameplate.namePlateUnitToken, ...);
+    elseif (nameplate and not UnitIsPlayer(unit)) then
+        UpdateEnemyBuffs(nameplate.UnitFrame.BuffFrame, nameplate.namePlateUnitToken, ...);
     end
 end);

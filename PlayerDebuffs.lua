@@ -61,12 +61,11 @@ function NameplatePlayerDebuffContainerMixin:OnLoad()
     self:RegisterEvent("UNIT_AURA");
 end
 
-function NameplatePlayerDebuffContainerMixin:OnEvent(event, ...)
+function NameplatePlayerDebuffContainerMixin:OnEvent(event, unit, ...)
     if (event == "UNIT_AURA") then
-        local unit = ...;
-
-        if (UnitIsUnit("player", unit)) then
-            self:UpdateBuffs(unit);
+        local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure());
+        if (nameplate and UnitIsUnit("player", unit)) then
+            self:UpdateBuffs(nameplate.namePlateUnitToken, ...);
         end
     elseif (event == "PLAYER_SPECIALIZATION_CHANGED") then
         self:Setup();
@@ -83,42 +82,80 @@ function NameplatePlayerDebuffContainerMixin:OnUpdate(elapsed)
     end
 end
 
-function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit)
-    self.unit = unit;
-    self.filter = "HARMFUL";
-
-    local PLAYER_DEBUFF_MAX_DISPLAY = 8;
-    local buffIndex = 1;
-    for i = 1, PLAYER_DEBUFF_MAX_DISPLAY do
-        local name, texture, count, debuffType, duration, expirationTime, caster, isStealable, _, spellId, _, isBossDebuff, _, _ = UnitAura(self.unit, i, self.filter);
-
-        if (name) then
-            if (not self.buffList[buffIndex]) then
-                self.buffList[buffIndex] = CreateFrame("Frame", nil, self, "NameplateBuffButtonTemplate");
-                self.buffList[buffIndex]:SetMouseClickEnabled(false);
-                self.buffList[buffIndex].layoutIndex = buffIndex;
-            end
-            local buff = self.buffList[buffIndex];
-            buff:SetID(i);
-            buff.Icon:SetTexture(texture);
-            if (count > 1) then
-                buff.CountFrame.Count:SetText(count);
-                buff.CountFrame.Count:Show();
-            else
-                buff.CountFrame.Count:Hide();
-            end
-
-            CooldownFrame_Set(buff.Cooldown, expirationTime - duration, duration, duration > 0, true);
-
-            buff:SetPoint("TOPLEFT", (i - 1) * 24, 0);
-            buff:Show();
-            buffIndex = buffIndex + 1;
-        end
+function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit, isFullUpdate, updatedAuraInfos)
+    if (not self:IsVisible() or not unit) then
+        return;
     end
 
+    self.unit = unit;
+    self.filter = "HARMFULL"
+
+    local activeBuffs = {};
+    local index = 1;
+    AuraUtil.ForEachAura(self.unit, self.filter, nil, function(...)
+        local name, icon, count, dispelType, duration, expirationTime, caster, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossAura, castByPlayer, nameplateShowAll = ...;
+    
+        table.insert(activeBuffs, {
+            ["spellId"] = spellId,
+            ["name"] = name,
+            ["icon"] = icon,
+            ["count"] = count,
+            ["dispelType"] = dispelType,
+            ["duration"] = duration,
+            ["expirationTime"] = expirationTime,
+            ["caster"] = caster,
+            ["isStealable"] = isStealable,
+            ["isBossAura"] = isBossAura,
+            ["castByPlayer"] = castByPlayer,
+            ["filter"] = self.filter,
+            ["isBuff"] = false,
+            ["index"] = index
+        });
+        
+        index = index + 1;
+    end);
+
+    local buffIndex =  1;
+    for _, activeBuff in ipairs(activeBuffs) do
+        if (not self.buffList[buffIndex]) then
+            self.buffList[buffIndex] = CreateFrame("Frame", nil, self, "NameplateBuffButtonTemplate");
+            self.buffList[buffIndex]:SetMouseClickEnabled(false);
+            self.buffList[buffIndex].layoutIndex = buffIndex;
+        end
+        local buff = self.buffList[buffIndex];
+        buff:SetID(activeBuff.index);
+        buff.name = activeBuff.name;
+        buff.filter = activeBuff.filter;
+        buff.Icon:SetTexture(activeBuff.icon);
+        if (activeBuff.count > 1) then
+            buff.CountFrame.Count:SetText(activeBuff.count);
+            buff.CountFrame.Count:Show();
+        else
+            buff.CountFrame.Count:Hide();
+        end
+
+        CooldownFrame_Set(buff.Cooldown, activeBuff.expirationTime - activeBuff.duration, activeBuff.duration, activeBuff.duration > 0, true);
+
+        if (not buff.isTooltipOverrided) then
+            hooksecurefunc(buff, 'OnEnter', function(self, ...)
+                NamePlateTooltip:SetUnitAura(self:GetParent().unit, self:GetID(), self.filter);
+            end);
+
+            buff.isTooltipOverrided = true;
+        end
+
+        buff:SetPoint("TOPLEFT", (buffIndex - 1) * 24, 0);
+        buff:Show();
+
+        buffIndex = buffIndex + 1;
+    end
+
+    local PLAYER_DEBUFF_MAX_DISPLAY = 8;
     for i = buffIndex, PLAYER_DEBUFF_MAX_DISPLAY do
         if (self.buffList[i]) then
             self.buffList[i]:Hide();
+        else
+            break;
         end
     end
 end
