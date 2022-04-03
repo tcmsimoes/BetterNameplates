@@ -87,6 +87,16 @@ function NameplatePlayerDebuffContainerMixin:UpdateBuffs(unit, isFullUpdate, upd
         return;
     end
 
+    if (AuraUtil.ShouldSkipAuraUpdate(isFullUpdate, updatedAuraInfos, function(auraInfo, ...)
+        return auraInfo.isHarmful;
+    end)) then
+        return;
+    end
+
+    for _, buff in ipairs(self.buffList) do
+        buff:Hide();
+    end
+
     self.unit = unit;
     self.filter = "HARMFULL"
 

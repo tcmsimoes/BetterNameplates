@@ -19,7 +19,6 @@ local visibilePlayerBuffs = {
     ["Bloodlust"] = true,
     ["Time Warp"] = true,
 -- dk
-    ["Unholy Strength"] = true,
     ["Anti-Magic Shell"] = true,
     ["Icebound Fortitude"] = true,
     ["Dark Succor"] = true,
@@ -34,6 +33,7 @@ local visibilePlayerBuffs = {
 ---- frost
     ["Pillar of Frost"] = true,
     ["Obliteration"] = true,
+    ["Breath of Sindragosa"] = true,
     ["Cold Heart"] = true,
     ["Empower Rune Weapon"] = true,
 ---- unholy
@@ -50,7 +50,9 @@ local visibilePlayerBuffs = {
     ["Shattered Defenses"] = true,
     ["Weighted Blade"] = true,
     ["Executioner's Precision"] = true,
----- fury
+-- hunter
+---- beast mastery
+    ["Barbed Shot"] = true,
 -- paladin
     ["Selfless Healer"] = true,
 -- druid
@@ -143,6 +145,12 @@ function UpdatePlayerBuffs(buffFrame, unit, isFullUpdate, updatedAuraInfos)
         return;
     end
 
+    if (AuraUtil.ShouldSkipAuraUpdate(isFullUpdate, updatedAuraInfos, function(auraInfo, ...)
+        return auraInfo.isHelpful;
+    end)) then
+        return;
+    end
+
     buffFrame.isActive = false;
     buffFrame.filter = "HELPFUL";
 
@@ -180,6 +188,20 @@ end
 
 function UpdateEnemyBuffs(buffFrame, unit, isFullUpdate, updatedAuraInfos)
     if (not buffFrame:IsVisible() or not unit) then
+        return;
+    end
+
+    if (AuraUtil.ShouldSkipAuraUpdate(isFullUpdate, updatedAuraInfos, function(auraInfo, ...)
+        if (auraInfo.isHarmful) then
+            if (buffFrame:ShouldShowBuff(auraInfo.name, auraInfo.sourceUnit, auraInfo.nameplateShowPersonal, auraInfo.nameplateShowAll)) then
+                return true;
+            end
+        elseif (auraInfo.isHelpful) then
+            return true;
+        end
+
+        return false;
+    end)) then
         return;
     end
 
