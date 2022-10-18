@@ -46,28 +46,34 @@ local function MyShouldShowBuff(frame, aura, forceAll)
         return false;
     end
 
+    aura.filter = frame.filter;
+
     if UnitIsPlayer(frame.unit) then
-        return (frame.showFriendlyBuffs and not aura.isHelpful)
-                and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, AuraUtil.AuraFilters.Harmful);
+        return (forceAll or aura.isHelpful or frame.myPlayerDebuffs)
+                and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, frame.filter);
     else
-        return ((aura.nameplateShowAll or forceAll or
-                (aura.nameplateShowPersonal and (aura.sourceUnit == "player" or aura.sourceUnit == "pet" or aura.sourceUnit == "vehicle")))
-                and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, AuraUtil.AuraFilters.Harmful)) or
-                ((aura.isHelpful and not UnitIsPlayer(frame.unit))
-                and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, AuraUtil.AuraFilters.Helpful));
+        if not aura.isHelpful then
+            return (aura.nameplateShowAll or forceAll
+                    or (aura.nameplateShowPersonal and (aura.sourceUnit == "player" or aura.sourceUnit == "pet" or aura.sourceUnit == "vehicle")))
+                    and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, frame.filter)
+        else
+            aura.filter = AuraUtil.AuraFilters.Helpful;
+            return (forceAll or not UnitIsPlayer(frame.unit))
+                    and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, AuraUtil.AuraFilters.Helpful);
+        end
     end
 end
 
 local function MyParseAllAuras(frame, forceAll)
-    if frame.auras == nil then
-        frame.auras = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable);
+    if not frame.myAuras then
+        frame.myAuras = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable);
     else
-        frame.auras:Clear();
+        frame.myAuras:Clear();
     end
 
     local function HandleAura(aura)
         if MyShouldShowBuff(frame, aura, forceAll) then
-            frame.auras[aura.auraInstanceID] = aura;
+            frame.myAuras[aura.auraInstanceID] = aura;
         end
 
         return false;
@@ -78,7 +84,6 @@ local function MyParseAllAuras(frame, forceAll)
     AuraUtil.ForEachAura(frame.unit, frame.filter, batchCount, HandleAura, usePackedAura);
 
     if not UnitIsPlayer(frame.unit) then
-        -- complete with buffs
         AuraUtil.ForEachAura(frame.unit, AuraUtil.AuraFilters.Helpful, batchCount, HandleAura, usePackedAura);
     end
 end
@@ -88,43 +93,48 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
     frame.myPreviousunit = unit;
     local aurasChanged = false;
 
-    if UnitIsUnit(unit, "player") and auraSettings.showFriendlyBuffs then
-        -- it is personalFriendlyBuffFrame replace with debuffs
-        frame.filter = AuraUtil.AuraFilters.Harmful;
-    else
-
-    if not unitAuraUpdateInfo or unitAuraUpdateInfo.isFullUpdate or unit ~= previousUnit or frame.auras == nil then
-        MyParseAllAuras(frame, auraSettings.showAll);
-        aurasChanged = true;
-    else
-        if not unitAuraUpdateInfo.addedAuras then
-            for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                if MyShouldShowBuff(frame, aura, auraSettings.showAll) then
-                    frame.auras[aura.auraInstanceID] = aura;
-                    aurasChanged = true;
-                end
-            end
-        end
-
-        if not unitAuraUpdateInfo.updatedAuraInstanceIDs then
-            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
-                if not frame.auras[auraInstanceID] then
-                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.unit, auraInstanceID);
-                    frame.auras[auraInstanceID] = newAura;
-                    aurasChanged = true;
-                end
-            end
-        end
-
-        if not unitAuraUpdateInfo.removedAuraInstanceIDs then
-            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
-                if not frame.auras[auraInstanceID] then
-                    frame.auras[auraInstanceID] = nil;
-                    aurasChanged = true;
-                end
-            end
-        end
+    if frame.auras then
+        frame.auras:Clear();
     end
+
+    if frame.myPlayerDebuffs then
+        frame.filter = AuraUtil.AuraFilters.Harmful;
+    end
+
+    -- if not unitAuraUpdateInfo or unitAuraUpdateInfo.isFullUpdate or unit ~= previousUnit or not frame.myAuras then
+    --     MyParseAllAuras(frame, auraSettings.showAll);
+    --     aurasChanged = true;
+    -- else
+    --     if unitAuraUpdateInfo.addedAuras then
+    --         for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
+    --             if MyShouldShowBuff(frame, aura, auraSettings.showAll) then
+    --                 frame.myAuras[aura.auraInstanceID] = aura;
+    --                 aurasChanged = true;
+    --             end
+    --         end
+    --     end
+
+    --     if unitAuraUpdateInfo.updatedAuraInstanceIDs then
+    --         for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
+    --             if not frame.myAuras[auraInstanceID] then
+    --                 local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.unit, auraInstanceID);
+    --                 frame.myAuras[auraInstanceID] = newAura;
+    --                 aurasChanged = true;
+    --             end
+    --         end
+    --     end
+
+    --     if unitAuraUpdateInfo.removedAuraInstanceIDs then
+    --         for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
+    --             if not frame.myAuras[auraInstanceID] then
+    --                 frame.myAuras[auraInstanceID] = nil;
+    --                 aurasChanged = true;
+    --             end
+    --         end
+    --     end
+    -- end
+    MyParseAllAuras(frame, auraSettings.showAll);
+    aurasChanged = true;
 
     frame:UpdateAnchor();
 
@@ -135,7 +145,7 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
     frame.buffPool:ReleaseAll();
 
     local buffIndex = 1;
-    frame.auras:Iterate(function(auraInstanceID, aura)
+    frame.myAuras:Iterate(function(auraInstanceID, aura)
         local buff = frame.buffPool:Acquire();
         buff.auraInstanceID = auraInstanceID;
         buff.isBuff = aura.isHelpful;
@@ -161,6 +171,13 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
         end
         CooldownFrame_Set(buff.Cooldown, aura.expirationTime - aura.duration, aura.duration, aura.duration > 0, true);
 
+        if not buff.myTooltip then
+            hooksecurefunc(buff, 'OnEnter', function(self, ...)
+                NamePlateTooltip:SetUnitAura(self:GetParent().unit, self.auraInstanceID, self.filter);
+            end);
+            buff.myTooltip = true;
+        end
+
         buff:Show();
 
         buffIndex = buffIndex + 1;
@@ -170,22 +187,27 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
     frame:Layout();
 end
 
-hooksecurefunc(_G.BaseNamePlateUnitFrameTemplate.BuffFrame, "SetActive", function(...)
-    print("_G.BaseNamePlateUnitFrameTemplate.BuffFrame.SetActive => false")
+hooksecurefunc(_G.NamePlateDriverFrame, "OnNamePlateAdded", function(self, namePlateUnitToken)
+    local namePlateFrameBase = C_NamePlate.GetNamePlateForUnit(namePlateUnitToken, issecure());
+
+    hooksecurefunc(namePlateFrameBase.UnitFrame.BuffFrame, "SetActive", function(self, ...)
+        self.isActive = false;
+    end);
+
+    hooksecurefunc(namePlateFrameBase.UnitFrame.BuffFrame, "UpdateBuffs", function(self, ...)
+        self.myPlayerDebuffs = false;
+        MyUpdateBuffs(self, ...);
+    end);
+
+    namePlateFrameBase.UnitFrame.BuffFrame:SetActive(false);
+    self:OnUnitAuraUpdate(namePlateUnitToken);
+end);
+
+hooksecurefunc(_G.PersonalFriendlyBuffFrame, "SetActive", function(self, ...)
     self.isActive = false;
 end);
 
-hooksecurefunc(_G.BaseNamePlateUnitFrameTemplate.BuffFrame, "UpdateBuffs", function(...)
-    print("_G.BaseNamePlateUnitFrameTemplate.BuffFrame.UpdateBuffs => MyUpdateBuffs")
-    MyUpdateBuffs(...);
-end);
-
-hooksecurefunc(_G.PersonalFriendlyBuffFrame, "SetActive", function(...)
-    print("_G.PersonalFriendlyBuffFrame.SetActive => false")
-    self.isActive = false;
-end);
-
-hooksecurefunc(_G.PersonalFriendlyBuffFrame, "UpdateBuffs", function(...)
-    print("_G.PersonalFriendlyBuffFrame.UpdateBuffs => MyUpdateBuffs")
-    MyUpdateBuffs(...);
+hooksecurefunc(_G.PersonalFriendlyBuffFrame, "UpdateBuffs", function(self, ...)
+    self.myPlayerDebuffs = true;
+    MyUpdateBuffs(self, ...);
 end);
