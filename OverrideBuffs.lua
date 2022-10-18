@@ -39,239 +39,153 @@ local visibilePlayerBuffs = {
 ---- unholy
     ["Festermight"] = true,
     ["Helchains"] = true,
--- warrior
-    ["Victorious"] = true,
----- fury
-    ["Enrage"] = true,
-    ["Juggernaut"] = true,
-    ["Battle Cry"] = true,
-    ["Whirlwind"] = true,
----- arms
-    ["Shattered Defenses"] = true,
-    ["Weighted Blade"] = true,
-    ["Executioner's Precision"] = true,
--- hunter
----- beast mastery
-    ["Barbed Shot"] = true,
--- paladin
-    ["Selfless Healer"] = true,
--- druid
----- balance
-    ["Starfall"] = true,
--- shaman
----- enhancement
-    ["Lightning Shield"] = true,
-    ["Crash Lightning"] = true,
--- monk
----- brewmaster
-    ["Rushing Jade Wind"] = true,
----- windwalker
-    ["Hit Combo"] = true,
--- mage
----- fire
-    ["Blazing Barrier"] = true,
-    ["Enhanced Pyrotechnics"] = true,
 };
 
-function UpdateBuffs(buffFrame, activeBuffs, maxDisplayBuffs)
-    local buffIndex = 1;
-    for _, activeBuff in ipairs(activeBuffs) do
-        if (not buffFrame.buffList[buffIndex]) then
-            buffFrame.buffList[buffIndex] = CreateFrame("Frame", nil, buffFrame, "NameplateBuffButtonTemplate");
-            buffFrame.buffList[buffIndex]:SetMouseClickEnabled(false);
-            buffFrame.buffList[buffIndex].layoutIndex = buffIndex;
+local function MyShouldShowBuff(frame, aura, forceAll)
+    if not aura or not aura.name then
+        return false;
+    end
+
+    if UnitIsPlayer(frame.unit) then
+        return (frame.showFriendlyBuffs and not aura.isHelpful)
+                and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, AuraUtil.AuraFilters.Harmful);
+    else
+        return ((aura.nameplateShowAll or forceAll or
+                (aura.nameplateShowPersonal and (aura.sourceUnit == "player" or aura.sourceUnit == "pet" or aura.sourceUnit == "vehicle")))
+                and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, AuraUtil.AuraFilters.Harmful)) or
+                ((aura.isHelpful and not UnitIsPlayer(frame.unit))
+                and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, AuraUtil.AuraFilters.Helpful));
+    end
+end
+
+local function MyParseAllAuras(frame, forceAll)
+    if frame.auras == nil then
+        frame.auras = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable);
+    else
+        frame.auras:Clear();
+    end
+
+    local function HandleAura(aura)
+        if MyShouldShowBuff(frame, aura, forceAll) then
+            frame.auras[aura.auraInstanceID] = aura;
         end
-        local buff = buffFrame.buffList[buffIndex];
-        buff:SetID(activeBuff.index);
-        buff.name = activeBuff.name;
-        buff.filter = activeBuff.filter;
-        buff.Icon:SetTexture(activeBuff.icon);
-        if (activeBuff.count > 1) then
-            buff.CountFrame.Count:SetText(activeBuff.count);
+
+        return false;
+    end
+
+    local batchCount = nil;
+    local usePackedAura = true;
+    AuraUtil.ForEachAura(frame.unit, frame.filter, batchCount, HandleAura, usePackedAura);
+
+    if not UnitIsPlayer(frame.unit) then
+        -- complete with buffs
+        AuraUtil.ForEachAura(frame.unit, AuraUtil.AuraFilters.Helpful, batchCount, HandleAura, usePackedAura);
+    end
+end
+
+local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
+    local previousUnit = frame.myPreviousunit;
+    frame.myPreviousunit = unit;
+    local aurasChanged = false;
+
+    if UnitIsUnit(unit, "player") and auraSettings.showFriendlyBuffs then
+        -- it is personalFriendlyBuffFrame replace with debuffs
+        frame.filter = AuraUtil.AuraFilters.Harmful;
+    else
+
+    if not unitAuraUpdateInfo or unitAuraUpdateInfo.isFullUpdate or unit ~= previousUnit or frame.auras == nil then
+        MyParseAllAuras(frame, auraSettings.showAll);
+        aurasChanged = true;
+    else
+        if not unitAuraUpdateInfo.addedAuras then
+            for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
+                if MyShouldShowBuff(frame, aura, auraSettings.showAll) then
+                    frame.auras[aura.auraInstanceID] = aura;
+                    aurasChanged = true;
+                end
+            end
+        end
+
+        if not unitAuraUpdateInfo.updatedAuraInstanceIDs then
+            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
+                if not frame.auras[auraInstanceID] then
+                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.unit, auraInstanceID);
+                    frame.auras[auraInstanceID] = newAura;
+                    aurasChanged = true;
+                end
+            end
+        end
+
+        if not unitAuraUpdateInfo.removedAuraInstanceIDs then
+            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
+                if not frame.auras[auraInstanceID] then
+                    frame.auras[auraInstanceID] = nil;
+                    aurasChanged = true;
+                end
+            end
+        end
+    end
+
+    frame:UpdateAnchor();
+
+    if not aurasChanged then
+        return;
+    end
+
+    frame.buffPool:ReleaseAll();
+
+    local buffIndex = 1;
+    frame.auras:Iterate(function(auraInstanceID, aura)
+        local buff = frame.buffPool:Acquire();
+        buff.auraInstanceID = auraInstanceID;
+        buff.isBuff = aura.isHelpful;
+        buff.layoutIndex = buffIndex;
+        buff.spellID = aura.spellId;
+
+        buff.Icon:SetTexture(aura.icon);
+        if aura.applications > 1 then
+            buff.CountFrame.Count:SetText(aura.applications);
             buff.CountFrame.Count:Show();
         else
             buff.CountFrame.Count:Hide();
         end
-        if (not buff.border) then
-            buff.border = CreateFrame("Frame", nil, buff, "BackdropTemplate");
-            buff.border:SetAllPoints(buff);
-            buff.border:SetBackdrop({
-                edgeFile = [[Interface/Buttons/WHITE8X8]], 
-                edgeSize = 1, 
-            });
-        end
-        buff.border:Hide();
-        if (activeBuff.isBuff and not activeBuff.castByPlayer) then
-            if (activeBuff.isStealable) then
-                buff.border:SetBackdropBorderColor(0.0, 0.0, 1.0, 0.7);
-            elseif (not activeBuff.castByPlayer) then
-                buff.border:SetBackdropBorderColor(1.0, 0.0, 0.0, 0.7);
+        buff.Cooldown:SetEdgeTexture("Interface\\Cooldown\\edge");
+        if aura.isHelpful and not aura.castByPlayer then
+            if aura.isStealable then
+                buff.Cooldown:SetSwipeColor(0, 0, 1);
+            else
+                buff.Cooldown:SetSwipeColor(1, 0, 0);
             end
-
-            buff.border:Show();
+        else
+            buff.Cooldown:SetSwipeColor(0, 0, 0);
         end
-
-        CooldownFrame_Set(buff.Cooldown, activeBuff.expirationTime - activeBuff.duration, activeBuff.duration, activeBuff.duration > 0, true);
-
-        if (not buff.isTooltipOverrided) then
-            hooksecurefunc(buff, 'OnEnter', function(self, ...)
-                NamePlateTooltip:SetUnitAura(self:GetParent().unit, self:GetID(), self.filter);
-            end);
-
-            buff.isTooltipOverrided = true;
-        end
+        CooldownFrame_Set(buff.Cooldown, aura.expirationTime - aura.duration, aura.duration, aura.duration > 0, true);
 
         buff:Show();
 
         buffIndex = buffIndex + 1;
-    end
-
-    for i = buffIndex, maxDisplayBuffs do
-        local buff = buffFrame.buffList[i];
-        if (buff) then
-            buff:Hide();
-            if (buff.border) then
-                buff.border:Hide();
-            end
-        else
-            break;
-        end
-    end
-    buffFrame:Layout();
-end
-
-function UpdatePlayerBuffs(buffFrame, unit, isFullUpdate, updatedAuraInfos)
-    if (not buffFrame:IsVisible() or not unit) then
-        return;
-    end
-
-    if (AuraUtil.ShouldSkipAuraUpdate(isFullUpdate, updatedAuraInfos, function(auraInfo, ...)
-        return auraInfo.isHelpful;
-    end)) then
-        return;
-    end
-
-    buffFrame.isActive = false;
-    buffFrame.filter = "HELPFUL";
-
-    local activeBuffs = {};
-    local index = 1;
-    AuraUtil.ForEachAura(unit, buffFrame.filter, nil, function(...)
-        local name, icon, count, dispelType, duration, expirationTime, caster, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossAura, castByPlayer, nameplateShowAll = ...;
-
-        if (visibilePlayerBuffs[name] or buffFrame:ShouldShowBuff(name, caster, nameplateShowPersonal, nameplateShowAll)) then
-            table.insert(activeBuffs, {
-                ["spellId"] = spellId,
-                ["name"] = name,
-                ["icon"] = icon,
-                ["count"] = count,
-                ["dispelType"] = dispelType,
-                ["duration"] = duration,
-                ["expirationTime"] = expirationTime,
-                ["caster"] = caster,
-                ["isStealable"] = isStealable,
-                ["isBossAura"] = isBossAura,
-                ["castByPlayer"] = castByPlayer,
-                ["filter"] = buffFrame.filter,
-                ["isBuff"] = true,
-                ["index"] = index
-            });
-        end
-
-        index = index + 1;
+        return buffIndex >= BUFF_MAX_DISPLAY;
     end);
 
-    local PLAYER_BUFF_MAX_DISPLAY = 8;
-
-    UpdateBuffs(buffFrame, activeBuffs, PLAYER_BUFF_MAX_DISPLAY);
+    frame:Layout();
 end
 
-function UpdateEnemyBuffs(buffFrame, unit, isFullUpdate, updatedAuraInfos)
-    if (not buffFrame:IsVisible() or not unit) then
-        return;
-    end
+hooksecurefunc(_G.BaseNamePlateUnitFrameTemplate.BuffFrame, "SetActive", function(...)
+    print("_G.BaseNamePlateUnitFrameTemplate.BuffFrame.SetActive => false")
+    self.isActive = false;
+end);
 
-    if (AuraUtil.ShouldSkipAuraUpdate(isFullUpdate, updatedAuraInfos, function(auraInfo, ...)
-        if (auraInfo.isHarmful) then
-            if (buffFrame:ShouldShowBuff(auraInfo.name, auraInfo.sourceUnit, auraInfo.nameplateShowPersonal, auraInfo.nameplateShowAll)) then
-                return true;
-            end
-        elseif (auraInfo.isHelpful) then
-            return true;
-        end
+hooksecurefunc(_G.BaseNamePlateUnitFrameTemplate.BuffFrame, "UpdateBuffs", function(...)
+    print("_G.BaseNamePlateUnitFrameTemplate.BuffFrame.UpdateBuffs => MyUpdateBuffs")
+    MyUpdateBuffs(...);
+end);
 
-        return false;
-    end)) then
-        return;
-    end
+hooksecurefunc(_G.PersonalFriendlyBuffFrame, "SetActive", function(...)
+    print("_G.PersonalFriendlyBuffFrame.SetActive => false")
+    self.isActive = false;
+end);
 
-    buffFrame.isActive = false;
-    buffFrame.filter = "HELPFUL";
-
-    local activeBuffs = {};
-    local filter = "HARMFULL|INCLUDE_NAME_PLATE_ONLY";
-    local index = 1;
-    AuraUtil.ForEachAura(unit, filter, nil, function(...)
-        local name, icon, count, dispelType, duration, expirationTime, caster, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossAura, castByPlayer, nameplateShowAll = ...;
-
-        if (buffFrame:ShouldShowBuff(name, caster, nameplateShowPersonal, nameplateShowAll)) then
-            table.insert(activeBuffs, {
-                ["spellId"] = spellId,
-                ["name"] = name,
-                ["icon"] = icon,
-                ["count"] = count,
-                ["dispelType"] = dispelType,
-                ["duration"] = duration,
-                ["expirationTime"] = expirationTime,
-                ["caster"] = caster,
-                ["isStealable"] = isStealable,
-                ["isBossAura"] = isBossAura,
-                ["castByPlayer"] = castByPlayer,
-                ["filter"] = filter,
-                ["isBuff"] = false,
-                ["index"] = index
-            });
-        end
-
-        index = index + 1;
-    end);
-
-    filter = "HELPFUL";
-    index = 1;
-    AuraUtil.ForEachAura(unit, filter, nil, function(...)
-        local name, icon, count, dispelType, duration, expirationTime, caster, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossAura, castByPlayer, nameplateShowAll = ...;
-
-        table.insert(activeBuffs, {
-            ["spellId"] = spellId,
-            ["name"] = name,
-            ["icon"] = icon,
-            ["count"] = count,
-            ["dispelType"] = dispelType,
-            ["duration"] = duration,
-            ["expirationTime"] = expirationTime,
-            ["caster"] = caster,
-            ["isStealable"] = isStealable,
-            ["isBossAura"] = isBossAura,
-            ["castByPlayer"] = castByPlayer,
-            ["filter"] = filter,
-            ["isBuff"] = true,
-            ["index"] = index
-        });
-
-        index = index + 1;
-    end);
-
-    local ENEMY_BUFF_MAX_DISPLAY = 6;
-
-    UpdateBuffs(buffFrame, activeBuffs, ENEMY_BUFF_MAX_DISPLAY);
-end
-
-
-hooksecurefunc(_G.NamePlateDriverFrame, "OnUnitAuraUpdate", function(self, unit, ...)
-    local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure());
-    if (nameplate and UnitIsUnit("player", unit)) then
-        UpdatePlayerBuffs(nameplate.UnitFrame.BuffFrame, nameplate.namePlateUnitToken, ...);
-    elseif (nameplate and not UnitIsPlayer(unit)) then
-        UpdateEnemyBuffs(nameplate.UnitFrame.BuffFrame, nameplate.namePlateUnitToken, ...);
-    end
+hooksecurefunc(_G.PersonalFriendlyBuffFrame, "UpdateBuffs", function(...)
+    print("_G.PersonalFriendlyBuffFrame.UpdateBuffs => MyUpdateBuffs")
+    MyUpdateBuffs(...);
 end);

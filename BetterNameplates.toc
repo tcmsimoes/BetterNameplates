@@ -1,4 +1,4 @@
-## Interface: 90207
+## Interface: 100000
 ## Title: BetterNameplates
 ## Notes: Tweaks to blizzard nameplates
 ## Author: Banksy
@@ -7,6 +7,4 @@ OverrideBuffs.lua
 OverrideColor.lua
 OverrideTargetPlate.lua
 OverridePlayerPlate.lua
-DecoratePlayerFrame.lua
-
-PlayerDebuffs.xml
+#DecoratePlayerFrame.lua
