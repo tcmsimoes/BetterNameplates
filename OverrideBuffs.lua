@@ -41,6 +41,14 @@ local visibilePlayerBuffs = {
     ["Helchains"] = true,
 };
 
+local function MyFilterTargetDebuff(aura)
+    return aura.nameplateShowPersonal;
+end
+
+local function MyFilterPlayerBuff(aura)
+    return visibilePlayerBuffs[aura.name];
+end
+
 local function MyShouldShowBuff(frame, aura, forceAll)
     if not aura or not aura.name then
         return false;
@@ -49,12 +57,12 @@ local function MyShouldShowBuff(frame, aura, forceAll)
     aura.filter = frame.filter;
 
     if UnitIsPlayer(frame.unit) then
-        return (forceAll or (aura.isHelpful and visibilePlayerBuffs[aura.name]) or frame.myPlayerDebuffs)
+        return (forceAll or (aura.isHelpful and MyFilterPlayerBuff(aura)) or frame.myPlayerDebuffs)
                 and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, aura.filter);
     else
         if not aura.isHelpful then
             return (forceAll or aura.nameplateShowAll
-                    or (aura.nameplateShowPersonal and (aura.sourceUnit == "player" or aura.sourceUnit == "pet" or aura.sourceUnit == "vehicle")))
+                    or (MyFilterTargetDebuff(aura) and (aura.sourceUnit == "player" or aura.sourceUnit == "pet" or aura.sourceUnit == "vehicle")))
                     and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, aura.filter)
         else
             aura.filter = AuraUtil.AuraFilters.Helpful;
@@ -94,26 +102,23 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
     end
 
     local filters = {};
-    if auraSettings.helpful then
-        table.insert(filters, AuraUtil.AuraFilters.Helpful);
-    end
-    if auraSettings.harmful then
-        if auraSettings.includeNameplateOnly then
-            table.insert(filters, AuraUtil.AuraFilters.Player);
-        else
-            table.insert(filters, AuraUtil.AuraFilters.Harmful);
-        end
-    end
     if frame.myPlayerDebuffs then
         table.insert(filters, AuraUtil.AuraFilters.Harmful);
-    end
-    if auraSettings.raid then
-        table.insert(filters, AuraUtil.AuraFilters.Raid);
+    elseif auraSettings.harmful then
+        table.insert(filters, AuraUtil.AuraFilters.Harmful);
+        if auraSettings.includeNameplateOnly then
+            table.insert(filters, AuraUtil.AuraFilters.Player);
+        end
+        if auraSettings.raid then
+            table.insert(filters, AuraUtil.AuraFilters.Raid);
+        end
+    elseif auraSettings.helpful then
+        table.insert(filters, AuraUtil.AuraFilters.Helpful);
     end
     local filterString = AuraUtil.CreateFilterString(unpack(filters));
 
-    local previousFilter = self.myPreviousFilter;
-    frame.myPreviousFilter = filterString;
+    local previousFilter = frame.myPreviousFilter;
+    frame.myPreviousFilter = frame.filter;
     frame.filter = filterString;
     local previousUnit = frame.myPreviousUnit;
     frame.myPreviousUnit = unit;
@@ -151,8 +156,6 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
             end
         end
     end
-    -- MyParseAllAuras(frame, auraSettings.showAll);
-    -- aurasChanged = true;
 
     frame:UpdateAnchor();
 
@@ -191,13 +194,11 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
         CooldownFrame_Set(buff.Cooldown, aura.expirationTime - aura.duration, aura.duration, aura.duration > 0, true);
 
         if not buff.myTooltipHook then
-            print("Creating tooltip hook for "..frame.unit.."/"..aura.name);
             hooksecurefunc(buff, 'OnEnter', function(self, ...)
-                NamePlateTooltip:SetUnitAura(self:GetParent().unit, self.auraInstanceID, self.filter);
+                print("tooltip filter: "..self.filter.."/"..self:GetParent().unit)
+                NamePlateTooltip:SetUnitBuffByAuraID(self:GetParent().unit, self.auraInstanceID, self.filter);
             end);
             buff.myTooltipHook = true;
-        else
-            print("Tooltip hook already present for "..frame.unit.."/"..aura.name);
         end
 
         buff:Show();
@@ -217,8 +218,6 @@ hooksecurefunc(_G.NamePlateDriverFrame, "OnNamePlateAdded", function(self, nameP
             self.isActive = false;
         end);
         namePlateFrameBase.UnitFrame.BuffFrame.mySetActiveHook = true;
-    else
-        print("SetActive hook already present for "..namePlateFrameBase.UnitFrame.BuffFrame.unit);
     end
 
     if not namePlateFrameBase.UnitFrame.BuffFrame.myUpdateBuffsHook then
@@ -227,8 +226,6 @@ hooksecurefunc(_G.NamePlateDriverFrame, "OnNamePlateAdded", function(self, nameP
             MyUpdateBuffs(self, ...);
         end);
         namePlateFrameBase.UnitFrame.BuffFrame.myUpdateBuffsHook = true;
-    else
-        print("UpdateBuffs hook already present for "..namePlateFrameBase.UnitFrame.BuffFrame.unit);
     end
 
     namePlateFrameBase.UnitFrame.BuffFrame:SetActive(false);
