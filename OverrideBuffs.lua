@@ -41,6 +41,7 @@ local visibilePlayerBuffs = {
     ["Helchains"] = true,
 };
 
+
 local function MyFilterTargetDebuff(aura)
     return aura.nameplateShowPersonal;
 end
@@ -169,20 +170,22 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
     local buffIndex = 1;
     frame.myAuras:Iterate(function(auraInstanceID, aura)
         local buff = frame.buffPool:Acquire();
-        buff.auraInstanceID = auraInstanceID;
         buff.isBuff = aura.isHelpful;
         buff.layoutIndex = buffIndex;
         buff.spellID = aura.spellId;
-        buff.filter = aura.filter;
-
+        buff.auraInstanceID = nil;
         buff.Icon:SetTexture(aura.icon);
-        if (aura.applications > 1) then
+
+        buff.Cooldown:SetEdgeTexture("Interface\\Cooldown\\edge");
+        buff.Cooldown:SetSwipeColor(0, 0, 0);
+        CooldownFrame_Set(buff.Cooldown, aura.expirationTime - aura.duration, aura.duration, aura.duration > 0, true);
+
+        if aura.applications > 1 then
             buff.CountFrame.Count:SetText(aura.applications);
             buff.CountFrame.Count:Show();
         else
             buff.CountFrame.Count:Hide();
         end
-        CooldownFrame_Set(buff.Cooldown, aura.expirationTime - aura.duration, aura.duration, aura.duration > 0, true);
 
         if not buff.MyBorder then
             buff.MyBorder = CreateFrame("Frame", nil, buff, "BackdropTemplate");
@@ -194,26 +197,15 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
             });
         end
         buff.MyBorder:Hide();
-        if aura.isBuff and not aura.castByPlayer then
+
+        if aura.isHelpful and not aura.isFromPlayerOrPlayerPet then
             if aura.isStealable then
                 buff.MyBorder:SetBackdropBorderColor(0.0, 0.0, 1.0, 0.7);
-            elseif not aura.castByPlayer then
+            elseif not aura.isFromPlayerOrPlayerPet then
                 buff.MyBorder:SetBackdropBorderColor(1.0, 0.0, 0.0, 0.7);
             end
 
             buff.MyBorder:Show();
-        end
-
-        if not buff.myTooltipHook then
-            hooksecurefunc(buff, 'OnEnter', function(self, ...)
-                if self.spellID and not self.auraInstanceID then
-                    NamePlateTooltip:SetSpellByID(self.spellID);
-                elseif self.auraInstanceID then
-                    local setFunction = self.isBuff and NamePlateTooltip.SetUnitBuffByAuraInstanceID or NamePlateTooltip.SetUnitDebuffByAuraInstanceID;
-                    setFunction(NamePlateTooltip, self:GetParent().unit, self.auraInstanceID, self.filter);
-                end
-            end);
-            buff.myTooltipHook = true;
         end
 
         buff:Show();
@@ -226,37 +218,40 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
     if auraSettings.showPersonalCooldowns and buffIndex < BUFF_MAX_DISPLAY and UnitIsUnit(unit, "player") then
         local nameplateSpells = C_SpellBook.GetTrackedNameplateCooldownSpells();
         for _, spellID in ipairs(nameplateSpells) do
-            print("tracking player cooldown: "..spellID)
+            print("showPersonalCooldowns: found buff "..buff.spellID)
             if not frame:HasActiveBuff(spellID) and buffIndex < BUFF_MAX_DISPLAY then
                 local locStart, locDuration = GetSpellLossOfControlCooldown(spellID);
                 local start, duration, enable, modRate = GetSpellCooldown(spellID);
                 if locDuration ~= 0 or duration ~= 0 then
                     local spellInfo = C_SpellBook.GetSpellInfo(spellID);
                     if spellInfo then
+                        print("showPersonalCooldowns: added buff "..buff.spellID)
                         local buff = frame.buffPool:Acquire();
                         buff.isBuff = true;
                         buff.layoutIndex = buffIndex;
-                        buff.spellID = spellID; 
+                        buff.spellID = spellID;
                         buff.auraInstanceID = nil;
-                        buff.Icon:SetTexture(spellInfo.iconID); 
+                        buff.Icon:SetTexture(spellInfo.iconID);
 
-                        local charges, maxCharges, chargeStart, chargeDuration, chargeModRate = GetSpellCharges(spellID);
                         buff.Cooldown:SetEdgeTexture("Interface\\Cooldown\\edge");
                         buff.Cooldown:SetSwipeColor(0, 0, 0);
                         CooldownFrame_Set(buff.Cooldown, start, duration, enable, false, modRate);
 
+                        local charges, maxCharges, chargeStart, chargeDuration, chargeModRate = GetSpellCharges(spellID);
                         if maxCharges and maxCharges > 1 then
                             buff.CountFrame.Count:SetText(charges);
                             buff.CountFrame.Count:Show();
                         else
                             buff.CountFrame.Count:Hide();
                         end
+
                         buff:Show();
-                        buffIndex = buffIndex + 1; 
+
+                        buffIndex = buffIndex + 1;
                     end
                 end
             end
-        end 
+        end
     end
 
     frame:Layout();
