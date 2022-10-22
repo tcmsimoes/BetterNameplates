@@ -5,13 +5,13 @@ function ClassNameplateBarHunter:Setup()
 
     if ( self:MatchesClass() ) then
         if ( self:MatchesSpec() ) then
-            self:RegisterUnitEvent("UNIT_HEALTH_FREQUENT", "pet");
+            self:RegisterUnitEvent("UNIT_HEALTH", "pet");
             self:RegisterUnitEvent("UNIT_MAXHEALTH", "pet");
             self:RegisterUnitEvent("UNIT_PET");
             self:RegisterEvent("PLAYER_ENTERING_WORLD");
             showBar = true;
         else
-            self:UnregisterEvent("UNIT_HEALTH_FREQUENT");
+            self:UnregisterEvent("UNIT_HEALTH");
             self:UnregisterEvent("UNIT_MAXHEALTH");
             self:UnregisterEvent("UNIT_PET");
             self:UnregisterEvent("PLAYER_ENTERING_WORLD");
@@ -30,6 +30,18 @@ function ClassNameplateBarHunter:Setup()
     return showBar;
 end
 
+-- function ClassNameplateBarHunter:ShowNameplateBar()
+--     self:Show();
+--     NamePlateDriverFrame.classNameplateMechanicFrame = self;
+-- end
+
+-- function ClassNameplateBarHunter:HideNameplateBar()
+--     self:Hide();
+--     if ( NamePlateDriverFrame.GetClassNameplateBar() == self ) then
+--         NamePlateDriverFrame.classNameplateMechanicFrame = nil;
+--     end
+-- end
+
 function ClassNameplateBarHunter:OnLoad()
     self.class = "HUNTER";
     self.powerToken = "PETHEALTH";
@@ -38,7 +50,6 @@ function ClassNameplateBarHunter:OnLoad()
     self.currValue = 0;
     self.Border:SetVertexColor(0, 0, 0, 1);
     self.Border:SetBorderSizes(nil, nil, 0, 0);
-    self:SetStatusBarColor(0.6, 1.0, 0.8);
 
     ClassNameplateBar.OnLoad(self);
 end
