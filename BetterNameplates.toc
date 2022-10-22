@@ -7,4 +7,5 @@ OverrideBuffs.lua
 OverrideColor.lua
 OverrideTargetPlate.lua
 OverridePlayerPlate.lua
+ClassNameplateBar_Hunter.lua
 #DecoratePlayerFrame.lua
