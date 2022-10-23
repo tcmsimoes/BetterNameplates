@@ -259,24 +259,25 @@ end
 
 hooksecurefunc(_G.NamePlateDriverFrame, "OnNamePlateAdded", function(self, namePlateUnitToken)
     local namePlateFrameBase = C_NamePlate.GetNamePlateForUnit(namePlateUnitToken, issecure());
+        if namePlateFrameBase then
+        if not namePlateFrameBase.UnitFrame.BuffFrame.mySetActiveHook then
+            hooksecurefunc(namePlateFrameBase.UnitFrame.BuffFrame, "SetActive", function(self, ...)
+                self.isActive = false;
+            end);
+            namePlateFrameBase.UnitFrame.BuffFrame.mySetActiveHook = true;
+        end
 
-    if not namePlateFrameBase.UnitFrame.BuffFrame.mySetActiveHook then
-        hooksecurefunc(namePlateFrameBase.UnitFrame.BuffFrame, "SetActive", function(self, ...)
-            self.isActive = false;
-        end);
-        namePlateFrameBase.UnitFrame.BuffFrame.mySetActiveHook = true;
-    end
+        if not namePlateFrameBase.UnitFrame.BuffFrame.myUpdateBuffsHook then
+            hooksecurefunc(namePlateFrameBase.UnitFrame.BuffFrame, "UpdateBuffs", function(self, ...)
+                self.myPlayerDebuffs = false;
+                MyUpdateBuffs(self, ...);
+            end);
+            namePlateFrameBase.UnitFrame.BuffFrame.myUpdateBuffsHook = true;
+        end
 
-    if not namePlateFrameBase.UnitFrame.BuffFrame.myUpdateBuffsHook then
-        hooksecurefunc(namePlateFrameBase.UnitFrame.BuffFrame, "UpdateBuffs", function(self, ...)
-            self.myPlayerDebuffs = false;
-            MyUpdateBuffs(self, ...);
-        end);
-        namePlateFrameBase.UnitFrame.BuffFrame.myUpdateBuffsHook = true;
-    end
-
-    namePlateFrameBase.UnitFrame.BuffFrame:SetActive(false);
-    self:OnUnitAuraUpdate(namePlateUnitToken);
+        namePlateFrameBase.UnitFrame.BuffFrame:SetActive(false);
+        self:OnUnitAuraUpdate(namePlateUnitToken);
+    fi
 end);
 
 hooksecurefunc(_G.PersonalFriendlyBuffFrame, "SetActive", function(self, ...)
