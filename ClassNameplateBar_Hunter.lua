@@ -30,18 +30,6 @@ function ClassNameplateBarHunter:Setup()
     return showBar;
 end
 
--- function ClassNameplateBarHunter:ShowNameplateBar()
---     self:Show();
---     NamePlateDriverFrame.classNameplateMechanicFrame = self;
--- end
-
--- function ClassNameplateBarHunter:HideNameplateBar()
---     self:Hide();
---     if ( NamePlateDriverFrame.GetClassNameplateBar() == self ) then
---         NamePlateDriverFrame.classNameplateMechanicFrame = nil;
---     end
--- end
-
 function ClassNameplateBarHunter:OnLoad()
     self.class = "HUNTER";
     self.powerToken = "PETHEALTH";

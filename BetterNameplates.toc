@@ -1,4 +1,4 @@
-## Interface: 100000
+## Interface: 100002
 ## Title: BetterNameplates
 ## Notes: Tweaks to blizzard nameplates
 ## Author: Banksy
@@ -8,4 +8,3 @@ OverrideColor.lua
 OverrideTargetPlate.lua
 OverridePlayerPlate.lua
 ClassNameplateBar_Hunter.xml
-#DecoratePlayerFrame.lua
