@@ -175,6 +175,7 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
         buff.spellID = aura.spellId;
         buff.auraInstanceID = nil;
         buff.Icon:SetTexture(aura.icon);
+        buff:SetMouseClickEnabled(false);
 
         buff.Cooldown:SetEdgeTexture("Interface\\Cooldown\\edge");
         buff.Cooldown:SetSwipeColor(0, 0, 0);
@@ -213,46 +214,6 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
         buffIndex = buffIndex + 1;
         return buffIndex >= BUFF_MAX_DISPLAY;
     end);
-
-    -- add player cooldowns
-    if auraSettings.showPersonalCooldowns and buffIndex < BUFF_MAX_DISPLAY and UnitIsUnit(unit, "player") then
-        local nameplateSpells = C_SpellBook.GetTrackedNameplateCooldownSpells();
-        for _, spellID in ipairs(nameplateSpells) do
-            print("showPersonalCooldowns: found buff "..buff.spellID)
-            if not frame:HasActiveBuff(spellID) and buffIndex < BUFF_MAX_DISPLAY then
-                local locStart, locDuration = GetSpellLossOfControlCooldown(spellID);
-                local start, duration, enable, modRate = GetSpellCooldown(spellID);
-                if locDuration ~= 0 or duration ~= 0 then
-                    local spellInfo = C_SpellBook.GetSpellInfo(spellID);
-                    if spellInfo then
-                        print("showPersonalCooldowns: added buff "..buff.spellID)
-                        local buff = frame.buffPool:Acquire();
-                        buff.isBuff = true;
-                        buff.layoutIndex = buffIndex;
-                        buff.spellID = spellID;
-                        buff.auraInstanceID = nil;
-                        buff.Icon:SetTexture(spellInfo.iconID);
-
-                        buff.Cooldown:SetEdgeTexture("Interface\\Cooldown\\edge");
-                        buff.Cooldown:SetSwipeColor(0, 0, 0);
-                        CooldownFrame_Set(buff.Cooldown, start, duration, enable, false, modRate);
-
-                        local charges, maxCharges, chargeStart, chargeDuration, chargeModRate = GetSpellCharges(spellID);
-                        if maxCharges and maxCharges > 1 then
-                            buff.CountFrame.Count:SetText(charges);
-                            buff.CountFrame.Count:Show();
-                        else
-                            buff.CountFrame.Count:Hide();
-                        end
-
-                        buff:Show();
-
-                        buffIndex = buffIndex + 1;
-                    end
-                end
-            end
-        end
-    end
 
     frame:Layout();
 end
