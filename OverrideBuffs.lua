@@ -41,9 +41,15 @@ local visibilePlayerBuffs = {
     ["Helchains"] = true,
 };
 
+local visibileTargetDebuffs = {
+-- hunter
+    ["Death Chakram"] = true,
+};
+
+
 
 local function MyFilterTargetDebuff(aura)
-    return aura.nameplateShowPersonal;
+    return visibileTargetDebuffs[aura.name] or aura.nameplateShowPersonal;
 end
 
 local function MyFilterPlayerBuff(aura)
