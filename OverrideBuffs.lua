@@ -1,4 +1,4 @@
-local visibilePlayerBuffs = {
+local myPlayerBuffs = {
 -- other classes
 ---- defensive
     ["Guardian Spirit"] = true,
@@ -22,26 +22,28 @@ local visibilePlayerBuffs = {
     ["Anti-Magic Shell"] = true,
     ["Icebound Fortitude"] = true,
     ["Dark Succor"] = true,
+    ["Icy Talons"] = false,
 ---- blood
     ["Bone Shield"] = true,
     ["Vampiric Blood"] = true,
     ["Dancing Rune Weapon"] = true,
     ["Rune Tap"] = true,
-    ["Blood Mirror"] = true,
+    ["Tombstone"] = true,
     ["Bonestorm"] = true,
     ["Vampiric Aura"] = true,
+    ["Sanguine Ground"] = true,
 ---- frost
     ["Pillar of Frost"] = true,
     ["Obliteration"] = true,
     ["Breath of Sindragosa"] = true,
     ["Cold Heart"] = true,
-    ["Empower Rune Weapon"] = true,
+    ["Unleashed Frenzy"] = true,
 ---- unholy
     ["Festermight"] = true,
     ["Helchains"] = true,
 };
 
-local visibileTargetDebuffs = {
+local myTargetDebuffs = {
 -- hunter
     ["Death Chakram"] = true,
 };
@@ -49,11 +51,19 @@ local visibileTargetDebuffs = {
 
 
 local function MyFilterTargetDebuff(aura)
-    return visibileTargetDebuffs[aura.name] or aura.nameplateShowPersonal;
+    if myTargetDebuffs[aura.name] ~= nil and myTargetDebuffs[aura.name] == false then
+        return false
+    end
+
+    return myTargetDebuffs[aura.name] or aura.nameplateShowPersonal;
 end
 
 local function MyFilterPlayerBuff(aura)
-    return visibilePlayerBuffs[aura.name] or aura.nameplateShowPersonal;
+    if myPlayerBuffs[aura.name] ~= nil and myPlayerBuffs[aura.name] == false then
+        return false
+    end
+
+    return myPlayerBuffs[aura.name] or aura.nameplateShowPersonal;
 end
 
 local function MyShouldShowBuff(frame, aura, forceAll)
