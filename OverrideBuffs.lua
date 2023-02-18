@@ -23,6 +23,7 @@ local myPlayerBuffs = {
     ["Icebound Fortitude"] = true,
     ["Dark Succor"] = true,
     ["Icy Talons"] = false,
+    ["Empower Rune Weapon"] = false,
 ---- blood
     ["Bone Shield"] = true,
     ["Vampiric Blood"] = true,
@@ -41,6 +42,46 @@ local myPlayerBuffs = {
 ---- unholy
     ["Festermight"] = true,
     ["Helchains"] = true,
+-- warrior
+    ["Victorious"] = true,
+---- fury
+    ["Enrage"] = true,
+    ["Juggernaut"] = true,
+    ["Battle Cry"] = true,
+    ["Whirlwind"] = true,
+---- arms
+    ["Shattered Defenses"] = true,
+    ["Weighted Blade"] = true,
+    ["Executioner's Precision"] = true,
+-- hunter
+---- beast mastery
+    ["Barbed Shot"] = true,
+-- paladin
+    ["Selfless Healer"] = true,
+-- druid
+---- balance
+    ["Starfall"] = true,
+-- shaman
+---- enhancement
+    ["Lightning Shield"] = true,
+    ["Crash Lightning"] = true,
+-- monk
+---- brewmaster
+    ["Rushing Jade Wind"] = true,
+---- windwalker
+    ["Hit Combo"] = true,
+-- mage
+---- fire
+    ["Blazing Barrier"] = true,
+    ["Enhanced Pyrotechnics"] = true,
+};
+
+local myPlayerDebuffs = {
+    ["Challenger's Burden"] = false,
+}
+
+local myTargetBuffs = {
+    ["Challenger's Might"] = false,
 };
 
 local myTargetDebuffs = {
@@ -48,57 +89,85 @@ local myTargetDebuffs = {
     ["Death Chakram"] = true,
 };
 
+local function MyShouldShowTargetBuff(aura)
+    if myTargetBuffs[aura.name] ~= nil and myTargetBuffs[aura.name] == false then
+        return false
+    end
 
+    return true
+end
 
-local function MyFilterTargetDebuff(aura)
+local function MyShouldShowTargetDebuff(aura)
     if myTargetDebuffs[aura.name] ~= nil and myTargetDebuffs[aura.name] == false then
         return false
     end
 
-    return myTargetDebuffs[aura.name] or aura.nameplateShowPersonal;
+    return myTargetDebuffs[aura.name] or aura.nameplateShowPersonal
 end
 
-local function MyFilterPlayerBuff(aura)
+local function MyShouldShowPlayerBuff(aura)
     if myPlayerBuffs[aura.name] ~= nil and myPlayerBuffs[aura.name] == false then
         return false
     end
 
-    return myPlayerBuffs[aura.name] or aura.nameplateShowPersonal;
+    return myPlayerBuffs[aura.name] or aura.nameplateShowPersonal
 end
 
-local function MyShouldShowBuff(frame, aura, forceAll)
+local function MyShouldShowPlayerDebuff(aura)
+    if myPlayerDebuffs[aura.name] ~= nil and myPlayerDebuffs[aura.name] == false then
+        return false
+    end
+
+    return true
+end
+
+
+local function MyShouldShowBuff(self, aura, forceAll)
     if not aura or not aura.name then
         return false;
     end
 
-    aura.filter = frame.filter;
+    aura.filter = self.filter;
 
-    if UnitIsPlayer(frame.unit) then
-        return (forceAll or (aura.isHelpful and MyFilterPlayerBuff(aura)) or frame.myPlayerDebuffs)
-                and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, aura.filter);
+    if UnitIsUnit(self.unit, "player") then
+        if not aura.isHelpful then
+            return (forceAll or aura.nameplateShowAll
+                    or MyShouldShowPlayerDebuff(aura))
+                    and not C_UnitAuras.IsAuraFilteredOutByInstanceID(self.unit, aura.auraInstanceID, aura.filter)
+                    and self.myPlayerDebuffs
+        else
+            aura.filter = AuraUtil.AuraFilters.Helpful;
+            return (forceAll or aura.nameplateShowAll
+                    or MyShouldShowPlayerBuff(aura))
+                    and not C_UnitAuras.IsAuraFilteredOutByInstanceID(self.unit, aura.auraInstanceID, aura.filter)
+                    and not self.myPlayerDebuffs
+        end
     else
         if not aura.isHelpful then
             return (forceAll or aura.nameplateShowAll
-                    or (MyFilterTargetDebuff(aura) and (aura.sourceUnit == "player" or aura.sourceUnit == "pet" or aura.sourceUnit == "vehicle")))
-                    and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, aura.filter)
+                    or (MyShouldShowTargetDebuff(aura) and (aura.sourceUnit == "player" or aura.sourceUnit == "pet" or aura.sourceUnit == "vehicle")))
+                    and not C_UnitAuras.IsAuraFilteredOutByInstanceID(self.unit, aura.auraInstanceID, aura.filter)
+                    and not self.myPlayerDebuffs
         else
             aura.filter = AuraUtil.AuraFilters.Helpful;
-            return (forceAll or not UnitIsPlayer(frame.unit))
-                    and not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, aura.auraInstanceID, aura.filter);
+            return (forceAll or aura.nameplateShowAll
+                    or (MyShouldShowTargetBuff(aura)  and not UnitIsPlayer(self.unit)))
+                    and not C_UnitAuras.IsAuraFilteredOutByInstanceID(self.unit, aura.auraInstanceID, aura.filter)
+                    and not self.myPlayerDebuffs
         end
     end
 end
 
-local function MyParseAllAuras(frame, forceAll)
-    if not frame.myAuras then
-        frame.myAuras = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable);
+local function MyParseAllAuras(self, forceAll)
+    if self.auras == nil then
+        self.auras = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable);
     else
-        frame.myAuras:Clear();
+        self.auras:Clear();
     end
 
     local function HandleAura(aura)
-        if MyShouldShowBuff(frame, aura, forceAll) then
-            frame.myAuras[aura.auraInstanceID] = aura;
+        if MyShouldShowBuff(self, aura, forceAll) then
+            self.auras[aura.auraInstanceID] = aura;
         end
 
         return false;
@@ -106,21 +175,17 @@ local function MyParseAllAuras(frame, forceAll)
 
     local batchCount = nil;
     local usePackedAura = true;
-    AuraUtil.ForEachAura(frame.unit, frame.filter, batchCount, HandleAura, usePackedAura);
+    AuraUtil.ForEachAura(self.unit, self.filter, batchCount, HandleAura, usePackedAura);
 
     -- add enemy buffs
-    if not UnitIsPlayer(frame.unit) then
-        AuraUtil.ForEachAura(frame.unit, AuraUtil.AuraFilters.Helpful, batchCount, HandleAura, usePackedAura);
+    if not UnitIsPlayer(self.unit) then
+        AuraUtil.ForEachAura(self.unit, AuraUtil.AuraFilters.Helpful, batchCount, HandleAura, usePackedAura);
     end
 end
 
-local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
-    if frame.auras then
-        frame.auras:Clear();
-    end
-
+local function MyUpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings)
     local filters = {};
-    if frame.myPlayerDebuffs then
+    if self.myPlayerDebuffs then
         table.insert(filters, AuraUtil.AuraFilters.Harmful);
     elseif auraSettings.harmful then
         table.insert(filters, AuraUtil.AuraFilters.Harmful);
@@ -135,57 +200,61 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
     end
     local filterString = AuraUtil.CreateFilterString(unpack(filters));
 
-    local previousFilter = frame.myPreviousFilter;
-    frame.myPreviousFilter = frame.filter;
-    frame.filter = filterString;
-    local previousUnit = frame.myPreviousUnit;
-    frame.myPreviousUnit = unit;
-    local aurasChanged = false;
+    local previousFilter = self.filter;
+    local previousUnit = self.unit;
+    self.unit = unit;
+    self.filter = filterString;
+    self.showFriendlyBuffs = auraSettings.showFriendlyBuffs;
 
-    if not unitAuraUpdateInfo or unitAuraUpdateInfo.isFullUpdate or unit ~= previousUnit or not frame.myAuras or filterString ~= previousFilter then
-        MyParseAllAuras(frame, auraSettings.showAll);
+    local aurasChanged = false;
+    if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate or unit ~= previousUnit or self.auras == nil or filterString ~= previousFilter then
+        MyParseAllAuras(self, auraSettings.showAll);
         aurasChanged = true;
     else
-        if unitAuraUpdateInfo.addedAuras then
+        if unitAuraUpdateInfo.addedAuras ~= nil then
             for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                if MyShouldShowBuff(frame, aura, auraSettings.showAll) then
-                    frame.myAuras[aura.auraInstanceID] = aura;
+                if MyShouldShowBuff(self, aura, auraSettings.showAll) then
+                    self.auras[aura.auraInstanceID] = aura;
                     aurasChanged = true;
                 end
             end
         end
 
-        if unitAuraUpdateInfo.updatedAuraInstanceIDs then
+        if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
             for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
-                if not frame.myAuras[auraInstanceID] then
-                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.unit, auraInstanceID);
-                    frame.myAuras[auraInstanceID] = newAura;
+                if self.auras[auraInstanceID] ~= nil then
+                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(self.unit, auraInstanceID);
+                    self.auras[auraInstanceID] = newAura;
                     aurasChanged = true;
                 end
             end
         end
 
-        if unitAuraUpdateInfo.removedAuraInstanceIDs then
+        if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
             for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
-                if not frame.myAuras[auraInstanceID] then
-                    frame.myAuras[auraInstanceID] = nil;
+                if self.auras[auraInstanceID] ~= nil then
+                    self.auras[auraInstanceID] = nil;
                     aurasChanged = true;
                 end
             end
         end
     end
 
-    frame:UpdateAnchor();
+    self:UpdateAnchor();
 
     if not aurasChanged then
         return;
     end
 
-    frame.buffPool:ReleaseAll();
+    self.buffPool:ReleaseAll();
+
+    if auraSettings.hideAll or not self.isActive then
+        return;
+    end
 
     local buffIndex = 1;
-    frame.myAuras:Iterate(function(auraInstanceID, aura)
-        local buff = frame.buffPool:Acquire();
+    self.auras:Iterate(function(auraInstanceID, aura)
+        local buff = self.buffPool:Acquire();
         buff.isBuff = aura.isHelpful;
         buff.layoutIndex = buffIndex;
         buff.spellID = aura.spellId;
@@ -228,40 +297,25 @@ local function MyUpdateBuffs(frame, unit, unitAuraUpdateInfo, auraSettings)
         buff:Show();
 
         buffIndex = buffIndex + 1;
-        return buffIndex >= BUFF_MAX_DISPLAY;
+        return buffIndex >= 10;
     end);
 
-    frame:Layout();
+    self:Layout();
+end
+
+local function MyUpdateDebuffs(self, unit, unitAuraUpdateInfo, auraSettings)
+    self.myPlayerDebuffs = true;
+
+    MyUpdateBuffs(self, unit, unitAuraUpdateInfo, auraSettings)
 end
 
 hooksecurefunc(_G.NamePlateDriverFrame, "OnNamePlateAdded", function(self, namePlateUnitToken)
     local namePlateFrameBase = C_NamePlate.GetNamePlateForUnit(namePlateUnitToken, issecure());
-    if namePlateFrameBase then
-        if not namePlateFrameBase.UnitFrame.BuffFrame.mySetActiveHook then
-            hooksecurefunc(namePlateFrameBase.UnitFrame.BuffFrame, "SetActive", function(self, ...)
-                self.isActive = false;
-            end);
-            namePlateFrameBase.UnitFrame.BuffFrame.mySetActiveHook = true;
-        end
+    if namePlateFrameBase and namePlateFrameBase.UnitFrame and namePlateFrameBase.UnitFrame.BuffFrame then
+        namePlateFrameBase.UnitFrame.BuffFrame.UpdateBuffs = MyUpdateBuffs;
 
-        if not namePlateFrameBase.UnitFrame.BuffFrame.myUpdateBuffsHook then
-            hooksecurefunc(namePlateFrameBase.UnitFrame.BuffFrame, "UpdateBuffs", function(self, ...)
-                self.myPlayerDebuffs = false;
-                MyUpdateBuffs(self, ...);
-            end);
-            namePlateFrameBase.UnitFrame.BuffFrame.myUpdateBuffsHook = true;
-        end
-
-        namePlateFrameBase.UnitFrame.BuffFrame:SetActive(false);
         self:OnUnitAuraUpdate(namePlateUnitToken);
     end
 end);
 
-hooksecurefunc(_G.PersonalFriendlyBuffFrame, "SetActive", function(self, ...)
-    self.isActive = false;
-end);
-
-hooksecurefunc(_G.PersonalFriendlyBuffFrame, "UpdateBuffs", function(self, ...)
-    self.myPlayerDebuffs = true;
-    MyUpdateBuffs(self, ...);
-end);
+_G.PersonalFriendlyBuffFrame.UpdateBuffs = MyUpdateDebuffs;
