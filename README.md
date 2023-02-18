@@ -1,8 +1,8 @@
 # BetterNameplates
 World of Warcraft plugin with tweaks to the default Blizzard Nameplates:
-- Aditional player buffs can be tracked in the player nameplate (aditionaly to the ones Blizzard already tracks)
+- Selected list of player buffs are tracked in the player nameplate (additionaly to the default ones)
 - Player debuffs are tracked in the player nameplate (below the resource bar)
-- Enemy buffs are now tracked in the their nameplates
-- Increased health bar height on player nameplate
-- Enlarges the current target nameplate (scaled up)
-- Enemy nameplates are threat colored
+- Bigger health bar on player nameplate
+- Hunter pet health is now displayed as a resource bar in the player nameplate (below focus bar)
+- Enemy buffs are tracked in the their nameplates (after debuffs, red highlight, blue when it cant be removed by player)
+- Enemy nameplates are threat colored when in groups
