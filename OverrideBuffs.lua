@@ -53,9 +53,6 @@ local myPlayerBuffs = {
     ["Shattered Defenses"] = true,
     ["Weighted Blade"] = true,
     ["Executioner's Precision"] = true,
--- hunter
----- beast mastery
-    ["Barbed Shot"] = true,
 -- paladin
     ["Selfless Healer"] = true,
 -- druid
@@ -87,6 +84,7 @@ local myTargetBuffs = {
 local myTargetDebuffs = {
 -- hunter
     ["Death Chakram"] = true,
+    ["Barbed Shot"] = true,
 };
 
 local function MyShouldShowTargetBuff(aura)
