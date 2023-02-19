@@ -10,12 +10,9 @@ local function MySetupPlayerNameplate(unit)
 
         -- workaround for the mysterious disapearing of healthbar
         namePlate.UnitFrame.hideHealthbar = false;
-
-        if namePlate.classNamePlatePowerBar and namePlate.classNamePlatePowerBar.IsVisible() then
-            namePlate.UnitFrame.healthBar:SetShown(true);
-            namePlate.UnitFrame.healthBar:Show()
-            namePlate.UnitFrame:Show()
-        end
+        namePlate.UnitFrame.healthBar:SetShown(true);
+        namePlate.UnitFrame.healthBar:Show()
+        namePlate.UnitFrame:Show()
     end
 end
 
@@ -24,6 +21,8 @@ myFrame:RegisterEvent("VARIABLES_LOADED")
 myFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 myFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 myFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+myFrame:RegisterEvent("PLAYER_UNGHOST")
+myFrame:RegisterEvent("PLAYER_UNGHOST")
 myFrame:SetScript("OnEvent", function(self, event, unit)
     if event == "VARIABLES_LOADED" then
         C_CVar.SetCVar("nameplateSelectedScale", 1.3)
@@ -36,7 +35,7 @@ myFrame:SetScript("OnEvent", function(self, event, unit)
             MySetupPlayerNameplate(unit)
         end
     -- workaround for the mysterious disapearing of healthbar
-    elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
+    elseif string.find(event, "PLAYER_") then
         MySetupPlayerNameplate("player")
     end
 end)
