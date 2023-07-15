@@ -3,7 +3,9 @@ local function resetHealthBarColor(frame)
         frame.colorOverride = nil
     end
 
-    frame.healthBar:SetStatusBarColor(frame.healthBar.r, frame.healthBar.g, frame.healthBar.b)
+    if frame.defaultColor then
+        frame.healthBar:SetStatusBarColor(frame.defaultColor.r, frame.defaultColor.g, frame.defaultColor.b)
+    end
 end
 
 local function updateHealthBarColor(frame)
@@ -21,6 +23,9 @@ local function updateHealthBarColor(frame)
             frame.colorOverride.previousColor.g = g
             frame.colorOverride.previousColor.b = b
         end
+    else
+        frame.defaultColor = {}
+        frame.defaultColor.r, frame.defaultColor.g, frame.defaultColor.b = frame.healthBar:GetStatusBarColor()
     end
 end
 
