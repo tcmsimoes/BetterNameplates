@@ -1,11 +1,70 @@
-local function resetHealthBarColor(frame)
+local function MyCompactUnitFrame_UpdateHealthColor(frame)
+	local r, g, b;
+	local unitIsConnected = UnitIsConnected(frame.unit);
+	local unitIsDead = unitIsConnected and UnitIsDead(frame.unit);
+	local unitIsPlayer = UnitIsPlayer(frame.unit) or UnitIsPlayer(frame.displayedUnit);
+
+	if ( not unitIsConnected or (unitIsDead and not unitIsPlayer) ) then
+		--Color it gray
+		r, g, b = 0.5, 0.5, 0.5;
+	else
+		if ( frame.optionTable.healthBarColorOverride ) then
+			local healthBarColorOverride = frame.optionTable.healthBarColorOverride;
+			r, g, b = healthBarColorOverride.r, healthBarColorOverride.g, healthBarColorOverride.b;
+		else
+			--Try to color it by class.
+			local localizedClass, englishClass = UnitClass(frame.unit);
+			local classColor = RAID_CLASS_COLORS[englishClass];
+			--debug
+			--classColor = RAID_CLASS_COLORS["PRIEST"];
+			local useClassColors = CompactUnitFrame_GetOptionUseClassColors(frame, frame.optionTable);
+			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit) or UnitTreatAsPlayerForDisplay(frame.unit)) and classColor and useClassColors ) then
+				-- Use class colors for players if class color option is turned on
+				r, g, b = classColor.r, classColor.g, classColor.b;
+			elseif ( CompactUnitFrame_IsTapDenied(frame) ) then
+				-- Use grey if not a player and can't get tap on unit
+				r, g, b = 0.9, 0.9, 0.9;
+			elseif ( frame.optionTable.colorHealthBySelection ) then
+				-- Use color based on the type of unit (neutral, etc.)
+				if ( frame.optionTable.considerSelectionInCombatAsHostile and CompactUnitFrame_IsOnThreatListWithPlayer(frame.displayedUnit) ) then
+					r, g, b = 1.0, 0.0, 0.0;
+				elseif ( UnitIsPlayer(frame.displayedUnit) and UnitIsFriend("player", frame.displayedUnit) ) then
+					-- We don't want to use the selection color for friendly player nameplates because
+					-- it doesn't show player health clearly enough.
+					r, g, b = 0.667, 0.667, 1.0;
+				else
+					r, g, b = UnitSelectionColor(frame.unit, frame.optionTable.colorHealthWithExtendedColors);
+				end
+			elseif ( UnitIsFriend("player", frame.unit) ) then
+				r, g, b = 0.0, 1.0, 0.0;
+			else
+				r, g, b = 1.0, 0.0, 0.0;
+			end
+		end
+	end
+
+	local oldR, oldG, oldB = frame.healthBar:GetStatusBarColor();
+	if ( r ~= oldR or g ~= oldG or b ~= oldB ) then
+		frame.healthBar:SetStatusBarColor(r, g, b);
+
+		if (frame.optionTable.colorHealthWithExtendedColors) then
+			frame.selectionHighlight:SetVertexColor(r, g, b);
+		else
+			frame.selectionHighlight:SetVertexColor(1, 1, 1);
+		end
+	end
+
+	-- Update whether healthbar is hidden due to being dead - only applies to non-player nameplates
+	local hideHealthBecauseDead = unitIsDead and not unitIsPlayer;
+	CompactUnitFrame_SetHideHealth(frame, hideHealthBecauseDead, HEALTH_BAR_HIDE_REASON_UNIT_DEAD);
+end
+
+local function resetHealthBarColor(frame, doIt)
     if frame.colorOverride then
         frame.colorOverride = nil
     end
 
-    if frame.defaultColor then
-        frame.healthBar:SetStatusBarColor(frame.defaultColor.r, frame.defaultColor.g, frame.defaultColor.b)
-    end
+    MyCompactUnitFrame_UpdateHealthColor(frame)
 end
 
 local function updateHealthBarColor(frame)
@@ -23,9 +82,6 @@ local function updateHealthBarColor(frame)
             frame.colorOverride.previousColor.g = g
             frame.colorOverride.previousColor.b = b
         end
-    else
-        frame.defaultColor = {}
-        frame.defaultColor.r, frame.defaultColor.g, frame.defaultColor.b = frame.healthBar:GetStatusBarColor()
     end
 end
 
