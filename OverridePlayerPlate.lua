@@ -2,17 +2,18 @@ COMBATFEEDBACK_FADEINTIME = 0
 COMBATFEEDBACK_HOLDTIME = 0
 COMBATFEEDBACK_FADEOUTTIME = 0
 
-local function MySetupPlayerNameplate(unit)
-    local namePlate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
-    if namePlate and namePlate.UnitFrame and namePlate.UnitFrame.healthBar then
-        PixelUtil.SetHeight(namePlate.UnitFrame.healthBar, 10)
-        namePlate.UnitFrame:SetScale(1.1)
+local previousNameplate = nil
 
-        -- workaround for the mysterious disapearing of healthbar
-        namePlate.UnitFrame.hideHealthbar = false;
-        namePlate.UnitFrame.healthBar:SetShown(true);
-        namePlate.UnitFrame.healthBar:Show()
-        namePlate.UnitFrame:Show()
+local function MySetupPlayerNameplate(unit)
+    local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
+    if nameplate and nameplate.UnitFrame and nameplate.UnitFrame.healthBar then
+        if previousNameplate and previousNameplate.UnitFrame and previousNameplate.UnitFrame.healthBar.defaultHeight then
+            PixelUtil.SetHeight(previousNameplate.UnitFrame.healthBar, previousNameplate.UnitFrame.healthBar.defaultHeight)
+            previousNameplate.UnitFrame.healthBar.defaultHeight = nil
+        end
+        previousNameplate = nameplate
+        previousNameplate.UnitFrame.healthBar.defaultHeight = nameplate.UnitFrame.healthBar:GetHeight()
+        PixelUtil.SetHeight(nameplate.UnitFrame.healthBar, 10)
     end
 end
 
@@ -26,7 +27,7 @@ myFrame:RegisterEvent("PLAYER_UNGHOST")
 myFrame:SetScript("OnEvent", function(self, event, unit)
     if event == "VARIABLES_LOADED" then
         C_CVar.SetCVar("nameplateSelectedScale", 1.3)
-        C_CVar.SetCVar("NamePlateVerticalScale", 1.1)
+        C_CVar.SetCVar("NamePlateVerticalScale", 1.0)
         C_CVar.SetCVar("NameplatePersonalShowWithTarget", 1)
         C_CVar.SetCVar("nameplateHideHealthAndPower", 0)
         C_CVar.SetCVar("namePlateSelfScale", 1.0)

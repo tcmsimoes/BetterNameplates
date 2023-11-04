@@ -1,70 +1,9 @@
-local function MyCompactUnitFrame_UpdateHealthColor(frame)
-	local r, g, b;
-	local unitIsConnected = UnitIsConnected(frame.unit);
-	local unitIsDead = unitIsConnected and UnitIsDead(frame.unit);
-	local unitIsPlayer = UnitIsPlayer(frame.unit) or UnitIsPlayer(frame.displayedUnit);
-
-	if ( not unitIsConnected or (unitIsDead and not unitIsPlayer) ) then
-		--Color it gray
-		r, g, b = 0.5, 0.5, 0.5;
-	else
-		if ( frame.optionTable.healthBarColorOverride ) then
-			local healthBarColorOverride = frame.optionTable.healthBarColorOverride;
-			r, g, b = healthBarColorOverride.r, healthBarColorOverride.g, healthBarColorOverride.b;
-		else
-			--Try to color it by class.
-			local localizedClass, englishClass = UnitClass(frame.unit);
-			local classColor = RAID_CLASS_COLORS[englishClass];
-			--debug
-			--classColor = RAID_CLASS_COLORS["PRIEST"];
-			local useClassColors = CompactUnitFrame_GetOptionUseClassColors(frame, frame.optionTable);
-			if ( (frame.optionTable.allowClassColorsForNPCs or UnitIsPlayer(frame.unit) or UnitTreatAsPlayerForDisplay(frame.unit)) and classColor and useClassColors ) then
-				-- Use class colors for players if class color option is turned on
-				r, g, b = classColor.r, classColor.g, classColor.b;
-			elseif ( CompactUnitFrame_IsTapDenied(frame) ) then
-				-- Use grey if not a player and can't get tap on unit
-				r, g, b = 0.9, 0.9, 0.9;
-			elseif ( frame.optionTable.colorHealthBySelection ) then
-				-- Use color based on the type of unit (neutral, etc.)
-				if ( frame.optionTable.considerSelectionInCombatAsHostile and CompactUnitFrame_IsOnThreatListWithPlayer(frame.displayedUnit) ) then
-					r, g, b = 1.0, 0.0, 0.0;
-				elseif ( UnitIsPlayer(frame.displayedUnit) and UnitIsFriend("player", frame.displayedUnit) ) then
-					-- We don't want to use the selection color for friendly player nameplates because
-					-- it doesn't show player health clearly enough.
-					r, g, b = 0.667, 0.667, 1.0;
-				else
-					r, g, b = UnitSelectionColor(frame.unit, frame.optionTable.colorHealthWithExtendedColors);
-				end
-			elseif ( UnitIsFriend("player", frame.unit) ) then
-				r, g, b = 0.0, 1.0, 0.0;
-			else
-				r, g, b = 1.0, 0.0, 0.0;
-			end
-		end
-	end
-
-	local oldR, oldG, oldB = frame.healthBar:GetStatusBarColor();
-	if ( r ~= oldR or g ~= oldG or b ~= oldB ) then
-		frame.healthBar:SetStatusBarColor(r, g, b);
-
-		if (frame.optionTable.colorHealthWithExtendedColors) then
-			frame.selectionHighlight:SetVertexColor(r, g, b);
-		else
-			frame.selectionHighlight:SetVertexColor(1, 1, 1);
-		end
-	end
-
-	-- Update whether healthbar is hidden due to being dead - only applies to non-player nameplates
-	local hideHealthBecauseDead = unitIsDead and not unitIsPlayer;
-	CompactUnitFrame_SetHideHealth(frame, hideHealthBecauseDead, HEALTH_BAR_HIDE_REASON_UNIT_DEAD);
-end
-
 local function resetHealthBarColor(frame, doIt)
     if frame.colorOverride then
         frame.colorOverride = nil
-    end
 
-    MyCompactUnitFrame_UpdateHealthColor(frame)
+        --CompactUnitFrame_UpdateHealthColor(frame);
+    end
 end
 
 local function updateHealthBarColor(frame)
@@ -77,18 +16,11 @@ local function updateHealthBarColor(frame)
             local b = frame.colorOverride.color.b
 
             frame.healthBar:SetStatusBarColor(r, g, b)
-
-            frame.colorOverride.previousColor.r = r
-            frame.colorOverride.previousColor.g = g
-            frame.colorOverride.previousColor.b = b
         end
     end
 end
 
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", updateHealthBarColor)
--- try to avoid mysterious color reset
-hooksecurefunc("CompactUnitFrame_UpdateHealthBorder", updateHealthBarColor)
-hooksecurefunc("CompactUnitFrame_UpdateAggroFlash", updateHealthBarColor)
 
 local playerRole = 0
 local offTanks = {}
@@ -233,18 +165,13 @@ local function updateThreatColor(frame)
         if not frame.colorOverride then
             frame.colorOverride = {
                 ["color"] = {},
-                ["previousColor"] = {},
             }
         end
 
         frame.colorOverride.unit = frame.unit
-        frame.colorOverride.lastStatus = status
         frame.colorOverride.color.r = classColor.r
         frame.colorOverride.color.g = classColor.g
         frame.colorOverride.color.b = classColor.b
-        frame.colorOverride.previousColor.r = 0.0
-        frame.colorOverride.previousColor.g = 0.0
-        frame.colorOverride.previousColor.b = 0.0
 
         updateHealthBarColor(frame)
 
@@ -295,7 +222,6 @@ local function updateThreatColor(frame)
             if not frame.colorOverride then
                 frame.colorOverride = {
                     ["color"] = {},
-                    ["previousColor"] = {},
                 }
             end
 
@@ -304,9 +230,6 @@ local function updateThreatColor(frame)
             frame.colorOverride.color.r = r
             frame.colorOverride.color.g = g
             frame.colorOverride.color.b = b
-            frame.colorOverride.previousColor.r = 0.0
-            frame.colorOverride.previousColor.g = 0.0
-            frame.colorOverride.previousColor.b = 0.0
 
             updateHealthBarColor(frame)
         end
@@ -326,10 +249,10 @@ myFrame:RegisterEvent("RAID_ROSTER_UPDATE")
 myFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 myFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 myFrame:SetScript("OnEvent", function(self, event, unit)
-    local updateAllNamePlates = function()
-        for _, namePlate in pairs(C_NamePlate.GetNamePlates(issecure())) do
-            if namePlate.UnitFrame and namePlate.UnitFrame.unit then
-                updateThreatColor(namePlate.UnitFrame)
+    local updateAllNameplates = function()
+        for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
+            if nameplate.UnitFrame and nameplate.UnitFrame.unit then
+                updateThreatColor(nameplate.UnitFrame)
             end
         end
     end
@@ -337,24 +260,24 @@ myFrame:SetScript("OnEvent", function(self, event, unit)
        event == "PLAYER_REGEN_ENABLED" then
          -- to ensure colors update when mob is back at their spawn
         if event == "PLAYER_REGEN_ENABLED" then
-            C_Timer.After(5.0, updateAllNamePlates)
+            C_Timer.After(5.0, updateAllNameplates)
         end
 
-        updateAllNamePlates()
+        updateAllNameplates()
     elseif event == "NAME_PLATE_UNIT_ADDED" then
-        local namePlate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
-        if namePlate and namePlate.UnitFrame then
-            updateThreatColor(namePlate.UnitFrame)
+        local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
+        if nameplate and nameplate.UnitFrame then
+            updateThreatColor(nameplate.UnitFrame)
         end
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
-        local namePlate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
-        if namePlate and namePlate.UnitFrame then
-            resetHealthBarColor(namePlate.UnitFrame)
+        local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
+        if nameplate and nameplate.UnitFrame then
+            resetHealthBarColor(nameplate.UnitFrame)
         end
     elseif event == "PLAYER_ROLES_ASSIGNED" or event == "RAID_ROSTER_UPDATE" or
            event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_ENTERING_WORLD" then
         offTanks, nonTanks, playerRole = getGroupRoles()
 
-        updateAllNamePlates()
+        updateAllNameplates()
     end
 end)
