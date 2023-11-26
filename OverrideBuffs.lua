@@ -36,6 +36,7 @@ local myPlayerBuffs = {
 ---- frost
     ["Pillar of Frost"] = true,
     ["Obliteration"] = true,
+    ["Killing Machine"] = true,
     ["Breath of Sindragosa"] = true,
     ["Cold Heart"] = true,
     ["Unleashed Frenzy"] = true,

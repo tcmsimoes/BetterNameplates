@@ -7,6 +7,8 @@ PETHEALTH_GREEN_INDEX = 1;
 PETHEALTH_YELLOW_INDEX = 2;
 PETHEALTH_RED_INDEX = 3;
 
+PETHEALTH_POWER = { {r = 0.52, g = 1.0, b = 0.52}, {r = 1.0, g = 0.98, b = 0.72}, {r = 1.0, g = 0.42, b = 0.42} };
+
 HunterPetHealthBarMixin = {};
 
 function HunterPetHealthBarMixin:Initialize()
@@ -30,14 +32,13 @@ function HunterPetHealthBarMixin:UpdateArt()
 	end
 
 	local percent = self.maxPower > 0 and self.currentPower / self.maxPower or 0;
-	local artInfo = PowerBarColor["STAGGER"];
 
 	if percent <= PETHEALTH_RED_TRANSITION then
-		artInfo = artInfo[PETHEALTH_RED_INDEX];
+		artInfo = PETHEALTH_POWER[PETHEALTH_RED_INDEX];
 	elseif percent <= PETHEALTH_YELLOW_TRANSITION then
-		artInfo = artInfo[PETHEALTH_YELLOW_INDEX];
+		artInfo = PETHEALTH_POWER[PETHEALTH_YELLOW_INDEX];
 	else
-		artInfo = artInfo[PETHEALTH_GREEN_INDEX];
+		artInfo = PETHEALTH_POWER[PETHEALTH_GREEN_INDEX];
 	end
 	self.overrideArtInfo = artInfo;
 
