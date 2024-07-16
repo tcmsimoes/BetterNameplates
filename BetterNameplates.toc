@@ -1,5 +1,6 @@
 ## Interface: 100200
 ## Title: BetterNameplates
+## IconTexture: 618858
 ## Notes: Tweaks to blizzard nameplates
 ## Author: Banksy
 
