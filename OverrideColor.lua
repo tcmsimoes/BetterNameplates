@@ -1,9 +1,10 @@
-local function resetHealthBarColor(frame, doIt)
+local function resetHealthBarColor(frame)
     if frame.colorOverride then
         frame.colorOverride = nil
-
-        --CompactUnitFrame_UpdateHealthColor(frame);
     end
+
+    -- default to red to avoid player color in enemy nameplates
+    frame.healthBar:SetStatusBarColor(1.0, 0.0, 0.0);
 end
 
 local function updateHealthBarColor(frame)
@@ -21,6 +22,7 @@ local function updateHealthBarColor(frame)
 end
 
 hooksecurefunc("CompactUnitFrame_UpdateHealthColor", updateHealthBarColor)
+hooksecurefunc("CompactUnitFrame_UpdateHealthBorder", updateHealthBarColor)
 
 local playerRole = 0
 local offTanks = {}
@@ -239,45 +241,56 @@ local function updateThreatColor(frame)
 end
 
 local myFrame = CreateFrame("frame")
-myFrame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
-myFrame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
-myFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 myFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 myFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+myFrame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
+myFrame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
+myFrame:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED")
+myFrame:RegisterEvent("PLAYER_SOFT_FRIEND_CHANGED")
+myFrame:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
+myFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+myFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 myFrame:RegisterEvent("PLAYER_ROLES_ASSIGNED")
+myFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 myFrame:RegisterEvent("RAID_ROSTER_UPDATE")
 myFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 myFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+
 myFrame:SetScript("OnEvent", function(self, event, unit)
     local updateAllNameplates = function()
-        for _, nameplate in pairs(C_NamePlate.GetNamePlates(issecure())) do
+        for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
             if nameplate.UnitFrame and nameplate.UnitFrame.unit then
                 updateThreatColor(nameplate.UnitFrame)
             end
         end
     end
-    if event == "UNIT_THREAT_SITUATION_UPDATE" or event == "UNIT_THREAT_LIST_UPDATE" or
-       event == "PLAYER_REGEN_ENABLED" then
-         -- to ensure colors update when mob is back at their spawn
-        if event == "PLAYER_REGEN_ENABLED" then
-            C_Timer.After(5.0, updateAllNameplates)
+
+    if event == "PLAYER_SOFT_INTERACT_CHANGED" or event == "PLAYER_SOFT_FRIEND_CHANGED" or
+       event == "PLAYER_SOFT_ENEMY_CHANGED" or event == "PLAYER_TARGET_CHANGED" or
+       event == "UNIT_THREAT_SITUATION_UPDATE" or event == "UNIT_THREAT_LIST_UPDATE" or
+       event == "UNIT_TARGET" or event == "PLAYER_REGEN_ENABLED" then
+        if event == "PLAYER_REGEN_ENABLED" then -- keep trying until mobs back at spawn
+            C_Timer.NewTimer(20.0, updateAllNameplates)
+        else -- soft targets need a short delay for border
+            C_Timer.NewTimer(0.1, updateAllNameplates)
         end
 
         updateAllNameplates()
     elseif event == "NAME_PLATE_UNIT_ADDED" then
-        local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
+        local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
         if nameplate and nameplate.UnitFrame then
             updateThreatColor(nameplate.UnitFrame)
         end
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
-        local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
+        local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
         if nameplate and nameplate.UnitFrame then
             resetHealthBarColor(nameplate.UnitFrame)
         end
-    elseif event == "PLAYER_ROLES_ASSIGNED" or event == "RAID_ROSTER_UPDATE" or
-           event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_ENTERING_WORLD" then
+    elseif event == "GROUP_ROSTER_UPDATE" or event == "RAID_ROSTER_UPDATE" or
+           event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_ROLES_ASSIGNED" or 
+           event == "PLAYER_ENTERING_WORLD" then
         offTanks, nonTanks, playerRole = getGroupRoles()
 
-        updateAllNameplates()
+        C_Timer.NewTimer(0.1, updateAllNameplates)
     end
 end)

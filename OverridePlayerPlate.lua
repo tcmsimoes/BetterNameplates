@@ -1,11 +1,7 @@
-COMBATFEEDBACK_FADEINTIME = 0
-COMBATFEEDBACK_HOLDTIME = 0
-COMBATFEEDBACK_FADEOUTTIME = 0
-
 local previousNameplate = nil
 
 local function MySetupPlayerNameplate(unit)
-    local nameplate = C_NamePlate.GetNamePlateForUnit(unit, issecure())
+    local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
     if nameplate and nameplate.UnitFrame and nameplate.UnitFrame.healthBar then
         if previousNameplate and previousNameplate.UnitFrame and previousNameplate.UnitFrame.healthBar.defaultHeight then
             PixelUtil.SetHeight(previousNameplate.UnitFrame.healthBar, previousNameplate.UnitFrame.healthBar.defaultHeight)

@@ -309,7 +309,7 @@ local function MyUpdateDebuffs(self, unit, unitAuraUpdateInfo, auraSettings)
 end
 
 hooksecurefunc(_G.NamePlateDriverFrame, "OnNamePlateAdded", function(self, namePlateUnitToken)
-    local namePlateFrameBase = C_NamePlate.GetNamePlateForUnit(namePlateUnitToken, issecure());
+    local namePlateFrameBase = C_NamePlate.GetNamePlateForUnit(namePlateUnitToken);
     if namePlateFrameBase and namePlateFrameBase.UnitFrame and namePlateFrameBase.UnitFrame.BuffFrame then
         namePlateFrameBase.UnitFrame.BuffFrame.UpdateBuffs = MyUpdateBuffs;
 
