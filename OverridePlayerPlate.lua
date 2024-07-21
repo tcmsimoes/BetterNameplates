@@ -1,8 +1,8 @@
 local previousNameplate = nil
 
-local function MySetupPlayerNameplate(unit)
-    local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
-    if nameplate and nameplate.UnitFrame and nameplate.UnitFrame.healthBar then
+local function MySetupPlayerNameplate()
+	local nameplate = C_NamePlate.GetNamePlateForUnit("player");
+	if nameplate and nameplate.UnitFrame and nameplate.UnitFrame.healthBar then
         if previousNameplate and previousNameplate.UnitFrame and previousNameplate.UnitFrame.healthBar.defaultHeight then
             PixelUtil.SetHeight(previousNameplate.UnitFrame.healthBar, previousNameplate.UnitFrame.healthBar.defaultHeight)
             previousNameplate.UnitFrame.healthBar.defaultHeight = nil
@@ -29,7 +29,7 @@ myFrame:SetScript("OnEvent", function(self, event, unit)
         C_CVar.SetCVar("namePlateSelfScale", 1.0)
     elseif event == "NAME_PLATE_UNIT_ADDED" then
         if UnitIsUnit("player", unit) then
-            MySetupPlayerNameplate(unit)
+            MySetupPlayerNameplate()
         end
     -- workaround for the mysterious disapearing of healthbar
     elseif string.find(event, "PLAYER_") then

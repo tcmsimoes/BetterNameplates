@@ -1,4 +1,4 @@
-## Interface: 100200
+## Interface: 100207
 ## Title: BetterNameplates
 ## IconTexture: 618858
 ## Notes: Tweaks to blizzard nameplates
@@ -7,4 +7,4 @@
 OverrideBuffs.lua
 OverrideColor.lua
 OverridePlayerPlate.lua
-ClassNameplateBar_Hunter.xml
+PetHealthBar.xml

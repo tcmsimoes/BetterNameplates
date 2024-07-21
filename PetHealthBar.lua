@@ -9,22 +9,41 @@ PETHEALTH_RED_INDEX = 3;
 
 PETHEALTH_POWER = { {r = 0.52, g = 1.0, b = 0.52}, {r = 1.0, g = 0.98, b = 0.72}, {r = 1.0, g = 0.42, b = 0.42} };
 
-HunterPetHealthBarMixin = {};
+-- Base mixin for pet health bar attached to the player's nameplate (Personal Resources)
+PetHealthBarMixin = CreateFromMixins(ClassNameplateAlternatePowerBarBaseMixin);
 
-function HunterPetHealthBarMixin:Initialize()
+function PetHealthBarMixin:Initialize()
 	self.frequentUpdates = true;
-	self.requiredClass = "HUNTER";
+	self.Border:SetVertexColor(0, 0, 0, 1);
+	self.Border:SetBorderSizes(nil, nil, 0, 0);
 
 	self.baseMixin.Initialize(self);
 end
 
-function HunterPetHealthBarMixin:UpdatePower()
+function PetHealthBarMixin:EvaluateUnit()
+	local meetsRequirements = false;
+
+	local _, class = UnitClass(self:GetUnit());
+	local spec = GetSpecialization();
+
+	if class == "HUNTER" and (spec == 1 or spec == 3) then
+		meetsRequirements = true;
+	elseif class == "WARLOCK" then
+		meetsRequirements = true;
+	elseif class == "DEATHKNIGHT" and (spec == 3) then
+		meetsRequirements = true;
+	end
+
+	self.baseMixin.SetBarEnabled(self, meetsRequirements);
+end
+
+function PetHealthBarMixin:UpdatePower()
 	self:UpdateMinMaxPower();
 	self.baseMixin.UpdatePower(self);
 	self:UpdateArt();
 end
 
-function HunterPetHealthBarMixin:UpdateArt()
+function PetHealthBarMixin:UpdateArt()
 	if not self.currentPower or not self.maxPower then
 		self.overrideArtInfo = nil;
 		self.baseMixin.UpdateArt(self);
@@ -45,24 +64,11 @@ function HunterPetHealthBarMixin:UpdateArt()
 	self.baseMixin.UpdateArt(self);
 end
 
-function HunterPetHealthBarMixin:EvaluateUnit()
-	local meetsRequirements = false;
-
-	local _, class = UnitClass(self:GetUnit());
-	meetsRequirements = class == self.requiredClass;
-
-	self:SetBarEnabled(meetsRequirements);
-end
-
-function HunterPetHealthBarMixin:OnBarEnabled()
-	self:UpdatePower();
-end
-
-function HunterPetHealthBarMixin:GetCurrentPower()
+function PetHealthBarMixin:GetCurrentPower()
 	return UnitHealth("pet") or 0;
 end
 
-function HunterPetHealthBarMixin:GetCurrentMinMaxPower()
+function PetHealthBarMixin:GetCurrentMinMaxPower()
 	local maxHealth = UnitHealthMax("pet");
 	return 0, maxHealth;
 end

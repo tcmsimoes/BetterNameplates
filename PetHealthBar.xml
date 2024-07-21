@@ -1,0 +1,9 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\..\FrameXML\UI.xsd">
+    <Script file="PetHealthBar.lua"/>
+    <StatusBar name="PetHealthBarFrame" inherits="ClassNameplateAlternatePowerBarBaseTemplate" mixin="PetHealthBarMixin">
+        <KeyValues>
+            <KeyValue key="scale" value="1"/>
+            <KeyValue key="unit" value="player" type="string"/>
+        </KeyValues>
+    </StatusBar>
+</Ui>

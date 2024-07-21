@@ -3,8 +3,14 @@ local function resetHealthBarColor(frame)
         frame.colorOverride = nil
     end
 
-    -- default to red to avoid player color in enemy nameplates
-    frame.healthBar:SetStatusBarColor(1.0, 0.0, 0.0);
+    local r, g, b, _ =  UnitSelectionColor(frame.unit)
+    local localizedClass, englishClass = UnitClass(frame.unit);
+    local classColor = RAID_CLASS_COLORS[englishClass];
+    if UnitIsPlayer(frame.unit) or UnitTreatAsPlayerForDisplay(frame.unit) then
+        r, g, b = classColor.r, classColor.g, classColor.b;
+    end
+    
+    frame.healthBar:SetStatusBarColor(r, g, b);
 end
 
 local function updateHealthBarColor(frame)
