@@ -8,6 +8,9 @@ local function resetHealthBarColor(frame)
     local classColor = RAID_CLASS_COLORS[englishClass];
     if UnitIsPlayer(frame.unit) or UnitTreatAsPlayerForDisplay(frame.unit) then
         r, g, b = classColor.r, classColor.g, classColor.b;
+    elseif not UnitPlayerControlled(frame.unit) and UnitIsTapDenied(frame.unit) then
+        -- Use grey if not a player and can't get tap on unit
+        r, g, b = 0.9, 0.9, 0.9;
     end
     
     frame.healthBar:SetStatusBarColor(r, g, b);
