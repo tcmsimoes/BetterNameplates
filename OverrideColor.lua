@@ -1,19 +1,19 @@
 local function resetHealthBarColor(frame)
     if frame.colorOverride then
         frame.colorOverride = nil
-    end
 
-    local r, g, b, _ =  UnitSelectionColor(frame.unit)
-    local localizedClass, englishClass = UnitClass(frame.unit);
-    local classColor = RAID_CLASS_COLORS[englishClass];
-    if UnitIsPlayer(frame.unit) or UnitTreatAsPlayerForDisplay(frame.unit) then
-        r, g, b = classColor.r, classColor.g, classColor.b;
-    elseif not UnitPlayerControlled(frame.unit) and UnitIsTapDenied(frame.unit) then
-        -- Use grey if not a player and can't get tap on unit
-        r, g, b = 0.9, 0.9, 0.9;
+        local r, g, b, _ =  UnitSelectionColor(frame.unit)
+        local localizedClass, englishClass = UnitClass(frame.unit);
+        local classColor = RAID_CLASS_COLORS[englishClass];
+        if UnitIsPlayer(frame.unit) or UnitTreatAsPlayerForDisplay(frame.unit) then
+            r, g, b = classColor.r, classColor.g, classColor.b;
+        elseif not UnitPlayerControlled(frame.unit) and UnitIsTapDenied(frame.unit) then
+            -- Use grey if not a player and can't get tap on unit
+            r, g, b = 0.9, 0.9, 0.9;
+        end
+        
+        frame.healthBar:SetStatusBarColor(r, g, b);
     end
-    
-    frame.healthBar:SetStatusBarColor(r, g, b);
 end
 
 local function updateHealthBarColor(frame)
@@ -166,10 +166,7 @@ local function threatSituation(monster)
 end
 
 local function updateThreatColor(frame)
-    if not frame.unit then
-        resetHealthBarColor(frame)
-
-    elseif UnitIsUnit("player", frame.unit) then
+    if UnitIsUnit("player", frame.unit) then
         local localizedClass, englishClass = UnitClass("player")
         local classColor = RAID_CLASS_COLORS[englishClass]
 
@@ -190,7 +187,7 @@ local function updateThreatColor(frame)
       and not UnitIsPlayer(frame.unit)
       and UnitCanAttack("player", frame.unit)
       and not CompactUnitFrame_IsTapDenied(frame)
-      and (UnitAffectingCombat(frame.unit) or UnitReaction("player", frame.unit) < 4) then
+      and not PlayerUtil.HasFriendlyReaction(frame.unit) then
         --[[Custom threat situation nameplate coloring:
             -1 = no threat data (monster not in combat).
             0 = a non tank is tanking by threat.

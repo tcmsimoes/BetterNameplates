@@ -2,14 +2,15 @@ local previousNameplate = nil
 
 local function MySetupPlayerNameplate()
 	local nameplate = C_NamePlate.GetNamePlateForUnit("player");
-	if nameplate and nameplate.UnitFrame and nameplate.UnitFrame.healthBar then
-        if previousNameplate and previousNameplate.UnitFrame and previousNameplate.UnitFrame.healthBar.defaultHeight then
-            PixelUtil.SetHeight(previousNameplate.UnitFrame.healthBar, previousNameplate.UnitFrame.healthBar.defaultHeight)
-            previousNameplate.UnitFrame.healthBar.defaultHeight = nil
+	if nameplate and nameplate.UnitFrame and nameplate.UnitFrame.HealthBarsContainer then
+        if previousNameplate and previousNameplate.UnitFrame and previousNameplate.UnitFrame.HealthBarsContainer.defaultHeight then
+            PixelUtil.SetHeight(previousNameplate.UnitFrame.HealthBarsContainer, previousNameplate.UnitFrame.HealthBarsContainer.defaultHeight)
+            previousNameplate.UnitFrame.HealthBarsContainer.defaultHeight = nil
         end
         previousNameplate = nameplate
-        previousNameplate.UnitFrame.healthBar.defaultHeight = nameplate.UnitFrame.healthBar:GetHeight()
-        PixelUtil.SetHeight(nameplate.UnitFrame.healthBar, 10)
+        previousNameplate.UnitFrame.HealthBarsContainer.defaultHeight = nameplate.UnitFrame.HealthBarsContainer:GetHeight()
+        PixelUtil.SetHeight(nameplate.UnitFrame.HealthBarsContainer, 10)
+        nameplate.UnitFrame.HealthBarsContainer.border:UpdateSizes();
     end
 end
 
@@ -31,7 +32,7 @@ myFrame:SetScript("OnEvent", function(self, event, unit)
         if UnitIsUnit("player", unit) then
             MySetupPlayerNameplate()
         end
-    -- workaround for the mysterious disapearing of healthbar
+    -- workaround for the mysterious disapearing of HealthBarsContainer
     elseif string.find(event, "PLAYER_") then
         MySetupPlayerNameplate("player")
     end
