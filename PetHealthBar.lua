@@ -30,8 +30,6 @@ function PetHealthBarMixin:EvaluateUnit()
 		meetsRequirements = true;
 	elseif class == "WARLOCK" then
 		meetsRequirements = true;
-	elseif class == "DEATHKNIGHT" and (spec == 3) then
-		meetsRequirements = true;
 	end
 
 	self.baseMixin.SetBarEnabled(self, meetsRequirements);
