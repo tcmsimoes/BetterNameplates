@@ -1,16 +1,19 @@
 local previousNameplate = nil
-
 local function MySetupPlayerNameplate()
 	local nameplate = C_NamePlate.GetNamePlateForUnit("player");
 	if nameplate and nameplate.UnitFrame and nameplate.UnitFrame.HealthBarsContainer then
         if previousNameplate and previousNameplate.UnitFrame and previousNameplate.UnitFrame.HealthBarsContainer.defaultHeight then
             PixelUtil.SetHeight(previousNameplate.UnitFrame.HealthBarsContainer, previousNameplate.UnitFrame.HealthBarsContainer.defaultHeight)
             previousNameplate.UnitFrame.HealthBarsContainer.defaultHeight = nil
+            previousNameplate.UnitFrame:SetFrameLevel(nameplate.UnitFrame:GetFrameLevel())
+            previousNameplate.UnitFrame:SetFrameStrata(nameplate.UnitFrame:GetFrameStrata())
         end
         previousNameplate = nameplate
         previousNameplate.UnitFrame.HealthBarsContainer.defaultHeight = nameplate.UnitFrame.HealthBarsContainer:GetHeight()
         PixelUtil.SetHeight(nameplate.UnitFrame.HealthBarsContainer, 10)
         nameplate.UnitFrame.HealthBarsContainer.border:UpdateSizes();
+        nameplate.UnitFrame:SetFrameLevel(129)
+        nameplate.UnitFrame:SetFrameStrata(HIGH)
     end
 end
 

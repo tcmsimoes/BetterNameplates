@@ -1,4 +1,4 @@
-## Interface: 110002
+## Interface: 110100
 ## Title: BetterNameplates
 ## IconTexture: 618858
 ## Notes: Tweaks to blizzard nameplates
