@@ -21,11 +21,9 @@ local function updateHealthBarColor(frame)
         if frame.unit ~= frame.colorOverride.unit then
             resetHealthBarColor(frame)
         else
-            local r = frame.colorOverride.color.r
-            local g = frame.colorOverride.color.g
-            local b = frame.colorOverride.color.b
+            local color = frame.colorOverride.color
 
-            frame.healthBar:SetStatusBarColor(r, g, b)
+            frame.healthBar:SetStatusBarColor(color.r, color.g, color.b)
         end
     end
 end
@@ -171,15 +169,12 @@ local function updateThreatColor(frame)
         local classColor = RAID_CLASS_COLORS[englishClass]
 
         if not frame.colorOverride then
-            frame.colorOverride = {
-                ["color"] = {},
-            }
+            frame.colorOverride = {}
         end
 
         frame.colorOverride.unit = frame.unit
-        frame.colorOverride.color.r = classColor.r
-        frame.colorOverride.color.g = classColor.g
-        frame.colorOverride.color.b = classColor.b
+        frame.colorOverride.lastStatus = nil
+        frame.colorOverride.color = classColor
 
         updateHealthBarColor(frame)
 
@@ -228,16 +223,12 @@ local function updateThreatColor(frame)
             end
 
             if not frame.colorOverride then
-                frame.colorOverride = {
-                    ["color"] = {},
-                }
+                frame.colorOverride = {}
             end
 
             frame.colorOverride.unit = frame.unit
             frame.colorOverride.lastStatus = status
-            frame.colorOverride.color.r = r
-            frame.colorOverride.color.g = g
-            frame.colorOverride.color.b = b
+            frame.colorOverride.color = CreateColor(r, g, b)
 
             updateHealthBarColor(frame)
         end
